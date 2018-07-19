@@ -12,7 +12,7 @@
  * The design is inspired but not quite remixed from several existing
  * ones available notably on Thingiverse
  *
- +---------------------------------------------------------
+ +--------------------------------------------------------------------------
  * History
  * Date       Version Author      Description
  * 2018/07/??  <= v2  Ph.Gregoire Initial version(s)
@@ -20,7 +20,8 @@
  * 2018/07/16  v4     Ph.Gregoire Extend legs, add champfers
  * 2018/07/19  v4.01  Ph.Gregoire Fix TNut hammer size
  * 2018/07/19  v4.02  Ph.Gregoire Fix tenon issue
- +---------------------------------------------------------
+ * 2018/07/18  v5     Ph.Gregoire Endstop mount, zendstop arm, pulley raiser
+ +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
  *  Creative Commons Attribution 3.0 Unported License.
@@ -32,9 +33,19 @@
 
 use <../phgUtils.scad>
 
-/* Modify the following parameter to generated corner for LEFT or RIGHT side */
+/* Modify the following parameter to generate
+    - corner for LEFT or RIGHT side 
+    - pulley raiser
+*/
 SIDE="LEFT";
-SIDE="RIGHT";
+//SIDE="RIGHT";
+//SIDE="RAISER";
+//SIDE="ZENDSTOP";    // Generate the Z endstop support
+
+/* Modify following depending if endstop is Left or right, or to print Z endstop arm */
+ENDSTOPS="LEFT";
+//ENDSTOPS="RIGHT";
+
 
 /* Arbitrary parameters */
 // Top plate thickness (original acrylic plate is 8mm, but this makes screw seats thin)
@@ -63,6 +74,9 @@ pulleyAxleHeadDiam=11.5; 	// Diameter of the M5 screw head
 pulleyAxleHexThk=2.6;   // thickness of hex nut (M5) - keep mult of layer height
 pulleyAxleHexDiam=9.5;  // diameter of hex nut (M5)
 
+pulleyRaiserDiam=18;
+pulleyHeight=8; // to determine raiser height
+
 /********************************************************/
 /* Fixed constants of X5S by construction               */
 profW=20;	// width of profile
@@ -72,8 +86,8 @@ motorShaftInset=20; // Distance from outside frame by which the motors shafts ar
 assemblyScrewHeadDiam=9;
 assemblyScrewHeadThk=2.5;
 
-// T-nut screw dimensions   
-tnutScrewDiam=4;        
+// T-nut screw dimensions
+tnutScrewDiam=4;
 tnutScrewSeatDiam=7.5;  // Diameter of the screw head
 tnutHammerDiam=12;      // Diameter of the diagonal of the hammer nut
 
@@ -84,6 +98,22 @@ tnutScrewDistFromEdge=6;    // distance from edge of top plate tnut screw
 // side TNut positioning, this is more or less arbitrary
 sideTNutOffset=profW/2; // How much to inset the TNut holes on the sides
 sideTNutSeatDepth=1.4;  // slightly countersunken side screw heads
+
+// Endstops
+endsHolesDiam=1;    // Diameter of the drill hole
+endsHolesSpacing=10;// Spacing between the two screw holes
+endsWidth=20;       // With of the endstop boxing
+
+endsSwitchDepth=9;  // Distance from holes at which endstop closes
+endsXHolesMegaGantryOffset=20; // How much to offset the holes for mega-gantry
+
+// Z endstop support will be bolted on 20x40 frame
+endsZSupportWidth=15;
+endsZSupportLength=110;
+switchHolesDiam=1.5;
+switchHolesSpacing=10;
+switchWidth=20;
+switchHolesOffset=9;
 
 /************************************************************************/
 /* Begin computations                                                   */
@@ -127,19 +157,22 @@ module tnutSideWallHole(tx,ty) {
     tnutHole(tx,ty,sideTNutSeatDepth,wallThk);
 }
 
+module pulleyShaftNut(x,y,t,isHex=true) {
+    // shaft for pulley axle screw
+    trcyl_eps(x,y,0,pulleyAxleDiam,t);
+
+    // Imprint of hex nut
+    if(isHex) {
+        trcyl_eps(x,y,0,pulleyAxleHexDiam,pulleyAxleHexThk,fn=6);
+    }
+}
+
 module pulleyShaftHole(x,y,isScrew,isHex) {
     // make recess for pulley axle screw head
     if(isScrew) {
         trcyl_eps(wallThk+x,wallThk+y,thk-pulleyAxleHeadThk,pulleyAxleHeadDiam,pulleyAxleHeadThk);
     }
-    
-    // shaft for pulley axle screw
-    trcyl_eps(wallThk+x,wallThk+y,0,pulleyAxleDiam,thk);
-
-    // Imprint of hex nut
-    if(isHex) {
-        trcyl_eps(wallThk+x,wallThk+y,0,pulleyAxleHexDiam,pulleyAxleHexThk,fn=6);
-    }
+    pulleyShaftNut(wallThk+x,wallThk+y,thk,isHex);
 }
 
 module basePlate(isLeft) {
@@ -218,9 +251,8 @@ module sides() {
     intersection() {
         translate([0,0,thk]) {
             // Side side with one hole
-            sideWithLeg(lSide,true) {
-                trcyl_eps(profW/2,lSide-sideTNutOffset,0,tnutScrewDiam,wallThk);
-            }
+            sideWithLeg(lSide,true);
+            
             // Front side with two holes
             sideWithLeg(lFront,false) {
                 tnutSideWallHole(profW/2,wallThk+sideTNutOffset);
@@ -232,20 +264,64 @@ module sides() {
     }
 }
 
-module _corner(isLeft) {
-	basePlate(isLeft);
-	sides();
+module _corner(isLeft,isEndStops) {
+    difference() {
+        union() {
+            basePlate(isLeft);
+            sides();
+        }
+        if(isEndStops) {
+            // Holes for switch
+            for(dx=[0,endsXHolesMegaGantryOffset/2,endsXHolesMegaGantryOffset]) {
+                tr(lSide-switchHolesOffset-dx,0,switchWidth/2) rotate([-90,0,0])
+            switchHoles();
+            }
+        }
+    }
+}
+module switchHoles(x=0,y=0,z=0,ax=0,ay=0,az=0) {
+    for(i=[-1,1]) {
+        trrotcyl_eps(x,y+i*switchHolesSpacing/2,z,ax,ay,az,switchHolesDiam,wallThk);
+    }
+}
+
+module zEndstopArm(isLeft) {
+    if(!isLeft) translate([endsZSupportWidth,0,0]) mirror([1,0,0]) zEndstopArm(true);
+    else difference() {
+        union() {
+            roundedFlatBox(endsZSupportWidth,endsZSupportLength,wallThk,champR);
+            tr(-profW+endsZSupportWidth/2,profW) roundedFlatBox(profW*2,profW,wallThk,champR);
+        }
+        for(i=[-1,1]) tnutSideWallHole(endsZSupportWidth/2+i*profW/2,3*profW/2);
+        tnutSideWallHole(endsZSupportWidth/2,profW/2);
+        switchHoles(endsZSupportWidth-switchHolesOffset,endsZSupportLength-switchWidth/2,0);
+    }
+}
+
+module pulleyRaiser() {
+    tr(0,0,pulleyHeight) mirror([0,0,1]) difference() {
+        cylinder(d=pulleyRaiserDiam,h=pulleyHeight,$fn=$_FN_CYL*2);
+        pulleyShaftNut(0,0,pulleyHeight);
+    }
 }
 
 module corner() {
     if(SIDE=="LEFT") {
-        _corner(true);
-    } else {
+        // Build for left
+        _corner(true,ENDSTOPS=="LEFT");
+    } else if(SIDE=="RIGHT") {
+        // Mirror and build for right
         rotate([0,0,90]) {
             mirror([0,1,0]) {
-                _corner(false);
+                _corner(false,ENDSTOPS=="RIGHT");
             }
         }
+    } else if(SIDE=="RAISER") {
+        pulleyRaiser();
+    } else if(SIDE=="ZENDSTOP") {
+        zEndstopArm(ENDSTOPS=="LEFT");
+    } else {
+        echo("Set value of SIDE properly!");
     }
 }
 
