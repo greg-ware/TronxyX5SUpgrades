@@ -18,6 +18,7 @@
  * 2018/07/??  <= v2  Ph.Gregoire Initial version(s)
  * 2018/07/07  v3     Ph.Gregoire Proper belts alignement
  * 2018/07/16  v4     Ph.Gregoire Extend legs, add champfers
+ * 2018/07/16  v4.01  Ph.Gregoire Fix TNut hammer size
  +---------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -70,10 +71,10 @@ motorShaftInset=20; // Distance from outside frame by which the motors shafts ar
 assemblyScrewHeadDiam=9;
 assemblyScrewHeadThk=2.5;
 
-// T-nut screw dimensions
-tnutScrewDiam=4;
-tnutScrewSeatDiam=7.5;
-tnutHammerDiam=11.5;
+// T-nut screw dimensions   
+tnutScrewDiam=4;        
+tnutScrewSeatDiam=7.5;  // Diameter of the screw head
+tnutHammerDiam=12;      // Diameter of the diagonal of the hammer nut
 
 // top plate tnut positioning, this is somewhat arbitrary
 tnutScrewSeatDepth=4;       // original has 8mm thickness
