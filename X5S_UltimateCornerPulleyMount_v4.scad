@@ -18,7 +18,8 @@
  * 2018/07/??  <= v2  Ph.Gregoire Initial version(s)
  * 2018/07/07  v3     Ph.Gregoire Proper belts alignement
  * 2018/07/16  v4     Ph.Gregoire Extend legs, add champfers
- * 2018/07/16  v4.01  Ph.Gregoire Fix TNut hammer size
+ * 2018/07/19  v4.01  Ph.Gregoire Fix TNut hammer size
+ * 2018/07/19  v4.02  Ph.Gregoire Fix tenon issue
  +---------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -158,15 +159,15 @@ module basePlate(isLeft) {
                             [champRPlate,champRPlate]]);
 			}
             
-			// tenon X
-            tenonX_Y=wallThk+outerAxleY+pulleyAxleHeadDiam/2;
-            trcube(wallThk+profW/2-tenonWidth/2,tenonX_Y,thk,
-            tenonWidth,lFront-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonX_Y,tenonHeight);
+			// tenon along Front
+            tenonFront_Pos=wallThk+outerAxleY+pulleyAxleHeadDiam/2;
+            trcube(wallThk+profW/2-tenonWidth/2,tenonFront_Pos,thk,
+              tenonWidth,lFront-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonFront_Pos,tenonHeight);
 
-			// tenon Y
-            tenonY_X=wallThk+outerAxleX+pulleyAxleHeadDiam/2;
-			trcube(tenonY_X,wallThk+profW/2-tenonWidth/2,thk,
-            lSide-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonY_X,tenonWidth,tenonHeight);
+			// tenon along Side
+            tenonSide_Pos=wallThk+max(outerAxleX+pulleyAxleHeadDiam/2,profW);
+			trcube(tenonSide_Pos,wallThk+profW/2-tenonWidth/2,thk,
+              lSide-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonSide_Pos,tenonWidth,tenonHeight);
 		}
         // Remove hole for the head of the profiles assembly screw
         // The position of that is in the middle of the second profile
