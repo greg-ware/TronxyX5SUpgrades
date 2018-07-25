@@ -26,6 +26,7 @@
  | 2018/07/25 | v5.1   |Ph.Gregoire |Fix pulley raiser
  | 2018/07/26 | v6.01  |Ph.Gregoire |Fix dimentional issues: sides too high
  | 2018/07/26 | v6.02  |Ph.Gregoire |Remove unusable TNut hole
+ | 2018/07/26 | v6.03  |Ph.Gregoire |Fix pulley shaft position for belt paralelism
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -87,6 +88,7 @@ pulleyHeight=8; // to determine raiser height
 /* Fixed constants of X5S by construction               */
 profW=20;	// width of profile
 motorShaftInset=20; // Distance from outside frame by which the motors shafts are inset
+motorPulleyDiam=12; // Diameter of the motor pulley
 
 // X-profile Assembly screws characteristics
 assemblyScrewHeadDiam=9;
@@ -127,7 +129,7 @@ switchHolesOffset=9;
 
 // positioning of outer pulley axle
 outerAxleX=profW/2;
-outerAxleY=motorShaftInset-pulleyDiam/2;
+outerAxleY=motorShaftInset+(pulleyDiam-motorPulleyDiam)/2;
 
 // positioning of inner pulley axle
 innerAxleX=profW+pulleyAxleHeadDiam/2;
@@ -176,7 +178,7 @@ module pulleyShaftNut(x,y,t,isHex=true) {
 module pulleyShaftHole(x,y,isScrew,isHex) {
     // make recess for pulley axle screw head
     if(isScrew) {
-        trcyl_eps(wallThk+x,wallThk+y,thk-pulleyAxleHeadThk,pulleyAxleHeadDiam,pulleyAxleHeadThk);
+        trcyl_eps(wallThk+x,wallThk+y,thk-pulleyAxleHeadThk,pulleyAxleHeadDiam,pulleyAxleHeadThk+tenonHeight);
     }
     pulleyShaftNut(wallThk+x,wallThk+y,thk,isHex);
 }
@@ -199,7 +201,7 @@ module basePlate(isLeft) {
 			}
             
 			// tenon along Front
-            tenonFront_Pos=wallThk+outerAxleY+pulleyAxleHeadDiam/2;
+            tenonFront_Pos=wallThk;//+outerAxleY+pulleyAxleHeadDiam/2;
             trcube(wallThk+profW/2-tenonWidth/2,tenonFront_Pos,thk,
               tenonWidth,lFront-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonFront_Pos,tenonHeight);
 
@@ -208,10 +210,12 @@ module basePlate(isLeft) {
 			trcube(tenonSide_Pos,wallThk+profW/2-tenonWidth/2,thk,
               lSide-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonSide_Pos,tenonWidth,tenonHeight);
 		}
-        // Remove hole for the head of the profiles assembly screw
+        // Remove hole for the head of the profiles assembly screws
         // The position of that is in the middle of the second profile
-		trcyl(wallThk+profW/2+profW,wallThk+profW/2,thk+tenonHeight-assemblyScrewHeadThk,assemblyScrewHeadDiam,assemblyScrewHeadThk+$_EPSILON);
-		
+        for(p=[1,3]) {
+            trcyl(wallThk+p*profW/2,wallThk+profW/2,thk+tenonHeight-assemblyScrewHeadThk,assemblyScrewHeadDiam,assemblyScrewHeadThk+$_EPSILON);
+		}
+        
         // Holes for the 3 TNuts
 		/*v6.02*/ //tnutTopPlateHole(profW/2+wallThk,wallThk+tnutHammerDiam/2,0);
 		tnutTopPlateHole(profW/2+wallThk,lFront-tnutScrewDistFromEdge);
