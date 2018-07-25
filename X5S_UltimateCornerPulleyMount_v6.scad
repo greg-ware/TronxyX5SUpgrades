@@ -27,6 +27,8 @@
  | 2018/07/26 | v6.01  |Ph.Gregoire |Fix dimentional issues: sides too high
  | 2018/07/26 | v6.02  |Ph.Gregoire |Remove unusable TNut hole
  | 2018/07/26 | v6.03  |Ph.Gregoire |Fix pulley shaft position for belt paralelism
+ | 2018/07/26 | v6.04  |Ph.Gregoire |Through-holes to access or replace corner screws
+ | 2018/07/26 | v6.05  |Ph.Gregoire |Switches repositioning
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -44,7 +46,7 @@ use <phgUtils.scad>
     - pulley raiser
 */
 SIDE="LEFT";
-SIDE="RIGHT";
+//SIDE="RIGHT";
 
 PART="CORNER";
 //PART="RAISER";
@@ -93,6 +95,7 @@ motorPulleyDiam=12; // Diameter of the motor pulley
 // X-profile Assembly screws characteristics
 assemblyScrewHeadDiam=9;
 assemblyScrewHeadThk=2.5;
+assemblyScrewDiam=5;
 
 // T-nut screw dimensions
 tnutScrewDiam=4;
@@ -121,7 +124,7 @@ endsZSupportLength=110;
 switchHolesDiam=1.5;
 switchHolesSpacing=10;
 switchWidth=20;
-switchHolesOffset=9;
+switchHolesOffset=7.5;
 
 /************************************************************************/
 /* Begin computations                                                   */
@@ -165,22 +168,28 @@ module tnutSideWallHole(tx,ty) {
     tnutHole(tx,ty,sideTNutSeatDepth,wallThk);
 }
 
-module pulleyShaftNut(x,y,t,isHex=true) {
-    // shaft for pulley axle screw
-    trcyl_eps(x,y,0,pulleyAxleDiam,t);
-
-    // Imprint of hex nut
-    if(isHex) {
-        trcyl_eps(x,y,0,pulleyAxleHexDiam,pulleyAxleHexThk,fn=6);
-    }
-}
-
-module pulleyShaftHole(x,y,isScrew,isHex) {
+module shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew=true,isTop=false) {
     // make recess for pulley axle screw head
     if(isScrew) {
-        trcyl_eps(wallThk+x,wallThk+y,thk-pulleyAxleHeadThk,pulleyAxleHeadDiam,pulleyAxleHeadThk+tenonHeight);
+        trcyl_eps(x,y,isTop?0:t-screwHeadThk,screwHeadDiam,screwHeadThk);
     }
-    pulleyShaftNut(wallThk+x,wallThk+y,thk,isHex);
+    
+    // shaft for pulley axle screw
+    trcyl_eps(x,y,0,screwDiam,t);
+}
+
+module shaftHoleScrewHexNut(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,screwHexThk,screwHexDiam,isScrew=true,isHexNut=true) {
+    
+    shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew);
+
+    // Imprint of hex nut
+    if(isHexNut) {
+        trcyl_eps(x,y,0,screwHexDiam,screwHexThk,fn=6);
+    }
+}   
+
+module pulleyShaftHole(x,y,isScrew,isHexNut) {
+    shaftHoleScrewHexNut(x+wallThk,y+wallThk,thk+tenonHeight,pulleyAxleDiam,pulleyAxleHeadThk+tenonHeight,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,isScrew,isHexNut);
 }
 
 module basePlate(isLeft) {
@@ -213,7 +222,10 @@ module basePlate(isLeft) {
         // Remove hole for the head of the profiles assembly screws
         // The position of that is in the middle of the second profile
         for(p=[1,3]) {
-            trcyl(wallThk+p*profW/2,wallThk+profW/2,thk+tenonHeight-assemblyScrewHeadThk,assemblyScrewHeadDiam,assemblyScrewHeadThk+$_EPSILON);
+            x=wallThk+p*profW/2;
+            y=wallThk+profW/2;
+            trcyl(x,y,thk+tenonHeight-assemblyScrewHeadThk,assemblyScrewHeadDiam,assemblyScrewHeadThk+$_EPSILON);
+            shaftHoleScrew(x,y,thk+tenonHeight,assemblyScrewDiam,assemblyScrewHeadThk,assemblyScrewHeadDiam,true,true);
 		}
         
         // Holes for the 3 TNuts
@@ -228,7 +240,7 @@ module basePlate(isLeft) {
 		pulleyShaftHole(outerAxleX,outerAxleY,true,isLeft);
 		
         // inner axle shaft hole, no need for screw head recess
-		pulleyShaftHole(innerAxleX,innerAxleY,false,!isLeft);
+		pulleyShaftHole(innerAxleX,innerAxleY,true,!isLeft);
 	}
 }
 
@@ -319,28 +331,60 @@ module pulleyRaiser(isLeft) {
     }
 }
 
-module part() {
-    if(PART=="CORNER") {
-		if(SIDE=="LEFT") {
+module X20x20(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
+    color("grey")
+    trrot(x,y,z,ax,ay,az)
+    linear_extrude(height = length, center = false, convexity = 10)
+		import(file = "20X20_KJN992888.dxf");//, layer = "plate");
+}
+
+module X20x40(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
+    color("grey")
+    for(dx=[-profW/2,profW/2]) {
+        trrot(x+dx,y,z,ax,ay,az)
+            linear_extrude(height = length, center = false, convexity = 10)
+                import(file = "20X20_KJN992888.dxf");
+    }
+}
+
+module part(partType,side,endStops) {
+    if(partType=="CORNER") {
+		if(side=="LEFT") {
 			// Build for left
-			_corner(true,ENDSTOPS=="LEFT");
-		} else if(SIDE=="RIGHT") {
+			_corner(true,endStops=="LEFT");
+		} else if(side=="RIGHT") {
 			// Mirror and build for right
 			rotate([0,0,90]) {
 				mirror([0,1,0]) {
-					_corner(false,ENDSTOPS=="RIGHT");
+					_corner(false,endStops=="RIGHT");
 				}
 			}
 		} else {
 			echo("Specify a valid SIDE for CORNER PART");
 		}
-    } else if(PART=="RAISER") {
-        pulleyRaiser(SIDE=="LEFT");
-    } else if(PART=="ZENDSTOP") {
-        zEndstopArm(ENDSTOPS=="LEFT");
+    } else if(partType=="RAISER") {
+        pulleyRaiser(side=="LEFT");
+    } else if(partType=="ZENDSTOP") {
+        zEndstopArm(endStops=="LEFT");
     } else {
         echo("Set value of PART properly!");
     }
 }
 
-part();
+FRONTBAR=490;
+SIDEBAR=490;
+HEIGHT=500;
+module full() {
+    trrot(-wallThk,FRONTBAR/2+wallThk,-thk,0,0,-90) part("CORNER","RIGHT",ENDSTOPS);
+    tr(-wallThk,-FRONTBAR/2-wallThk,-thk) part("CORNER","LEFT",ENDSTOPS);
+    
+    X20x20(FRONTBAR,profW/2,FRONTBAR/2,profW/2,90);
+    for(s=[-1,1]) {
+        X20x20(SIDEBAR,profW,s*(FRONTBAR-profW)/2,profW/2,0,90);
+        X20x40(HEIGHT,profW,s*(FRONTBAR-profW)/2,profW,0,0);
+    }
+
+}
+
+part(PART,SIDE,ENDSTOPS);
+//full();
