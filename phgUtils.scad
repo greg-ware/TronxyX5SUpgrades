@@ -31,8 +31,13 @@ $_FN_CYL=32;
 // Epsilon
 $_EPSILON=0.2;
 
+/* Simple translation */
+module tr(dx,dy=0,dz=0) {
+    translate([dx,dy,dz]) children();
+}
+
 /* Translate and rotate children */
-module trrot(tx,ty,tz,ax,ay,az) {
+module trrot(tx,ty,tz,ax,ay=0,az=0) {
     translate([tx,ty,tz]) rotate([ax,ay,az]) children();
 }
 

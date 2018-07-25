@@ -13,14 +13,15 @@
  * ones available notably on Thingiverse
  *
  +--------------------------------------------------------------------------
- * History
- * Date       Version Author      Description
- * 2018/07/??  <= v2  Ph.Gregoire Initial version(s)
- * 2018/07/07  v3     Ph.Gregoire Proper belts alignement
- * 2018/07/16  v4     Ph.Gregoire Extend legs, add champfers
- * 2018/07/19  v4.01  Ph.Gregoire Fix TNut hammer size
- * 2018/07/19  v4.02  Ph.Gregoire Fix tenon issue
- * 2018/07/18  v5     Ph.Gregoire Endstop mount, zendstop arm, pulley raiser
+ | History
+ | Date       |Version |Author      |Description
+ | 2018/07/?? | <= v2  |Ph.Gregoire |Initial version(s)
+ | 2018/07/07 | v3     |Ph.Gregoire |Proper belts alignement
+ | 2018/07/16 | v4     |Ph.Gregoire |Extend legs, add champfers
+ | 2018/07/19 | v4.01  |Ph.Gregoire |Fix TNut hammer size
+ | 2018/07/19 | v4.02  |Ph.Gregoire |Fix tenon issue
+ | 2018/07/18 | v5     |Ph.Gregoire |Endstop mount, zendstop arm, pulley raiser
+ | 2018/07/25 | v5.1   |Ph.Gregoire |Fix pulley raiser
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -31,21 +32,22 @@
  *    Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 */
 
-use <../phgUtils.scad>
+use <phgUtils.scad>
 
 /* Modify the following parameter to generate
     - corner for LEFT or RIGHT side 
     - pulley raiser
 */
 SIDE="LEFT";
-//SIDE="RIGHT";
-//SIDE="RAISER";
-//SIDE="ZENDSTOP";    // Generate the Z endstop support
+SIDE="RIGHT";
+
+PART="CORNER";
+PART="RAISER";
+//PART="ZENDSTOP";    // Generate the Z endstop support
 
 /* Modify following depending if endstop is Left or right, or to print Z endstop arm */
 ENDSTOPS="LEFT";
 //ENDSTOPS="RIGHT";
-
 
 /* Arbitrary parameters */
 // Top plate thickness (original acrylic plate is 8mm, but this makes screw seats thin)
@@ -272,7 +274,7 @@ module _corner(isLeft,isEndStops) {
         }
         if(isEndStops) {
             // Holes for switch
-            for(dx=[0,endsXHolesMegaGantryOffset/2,endsXHolesMegaGantryOffset]) {
+            for(dx=[0,endsXHolesMegaGantryOffset/2,endsXHolesMegaGantryOffset,3*endsXHolesMegaGantryOffset/2]) {
                 tr(lSide-switchHolesOffset-dx,0,switchWidth/2) rotate([-90,0,0])
             switchHoles();
             }
@@ -298,31 +300,39 @@ module zEndstopArm(isLeft) {
     }
 }
 
-module pulleyRaiser() {
+module pulleyRaiser(isLeft) {
     tr(0,0,pulleyHeight) mirror([0,0,1]) difference() {
         cylinder(d=pulleyRaiserDiam,h=pulleyHeight,$fn=$_FN_CYL*2);
         pulleyShaftNut(0,0,pulleyHeight);
+		if(!isLeft) {
+            // drill a hole for screwing the T-Nut
+  trcyl_eps(profW/2-outerAxleX,tnutHammerDiam/2-outerAxleY,0,tnutScrewDiam,pulleyHeight);
+		}
     }
 }
 
-module corner() {
-    if(SIDE=="LEFT") {
-        // Build for left
-        _corner(true,ENDSTOPS=="LEFT");
-    } else if(SIDE=="RIGHT") {
-        // Mirror and build for right
-        rotate([0,0,90]) {
-            mirror([0,1,0]) {
-                _corner(false,ENDSTOPS=="RIGHT");
-            }
-        }
-    } else if(SIDE=="RAISER") {
-        pulleyRaiser();
-    } else if(SIDE=="ZENDSTOP") {
+module part() {
+    if(PART=="CORNER") {
+		if(SIDE=="LEFT") {
+			// Build for left
+			_corner(true,ENDSTOPS=="LEFT");
+		} else if(SIDE=="RIGHT") {
+			// Mirror and build for right
+			rotate([0,0,90]) {
+				mirror([0,1,0]) {
+					_corner(false,ENDSTOPS=="RIGHT");
+				}
+			}
+		} else {
+			echo("Specify a valid SIDE for CORNER PART");
+		}
+    } else if(PART=="RAISER") {
+        pulleyRaiser(SIDE=="LEFT");
+    } else if(PART=="ZENDSTOP") {
         zEndstopArm(ENDSTOPS=="LEFT");
     } else {
-        echo("Set value of SIDE properly!");
+        echo("Set value of PART properly!");
     }
 }
 
-corner();
+part();
