@@ -29,6 +29,7 @@
  | 2018/07/26 | v6.03  |Ph.Gregoire |Fix pulley shaft position for belt paralelism
  | 2018/07/26 | v6.04  |Ph.Gregoire |Through-holes to access or replace corner screws
  | 2018/07/26 | v6.05  |Ph.Gregoire |Switches repositioning
+ | 2018/07/26 | v6.06  |Ph.Gregoire |Side T-Nut repositioning
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -107,7 +108,8 @@ tnutScrewSeatDepth=4;       // original has 8mm thickness
 tnutScrewDistFromEdge=6;    // distance from edge of top plate tnut screw
 
 // side TNut positioning, this is more or less arbitrary
-sideTNutOffset=profW/2; // How much to inset the TNut holes on the sides
+sideTNutInset=0; /*v6.06*///profW/2; // How much to inset the TNut holes on the sides
+sideTNutOffset=3*profW/2; // How much to offset the TNut holes on the sides
 sideTNutSeatDepth=1.4;  // slightly countersunken side screw heads
 
 // Endstops
@@ -259,7 +261,7 @@ module sideWithLeg(l,isFront) {
                             [0,l-champR]]);
         
         // Outermost top bar TNut hole
-        tnutSideWallHole(profW/2,l-sideTNutOffset);
+        tnutSideWallHole(profW/2,sideTNutInset>0?l-sideTNutInset:sideTNutOffset+wallThk);
 
         // Leg TNut hole
         tnutSideWallHole(profW+profW/2,wallThk+profW/2);
@@ -277,7 +279,7 @@ module sides() {
             
             // Front side with two holes
             sideWithLeg(lFront,false) {
-                /*v6.02*///tnutSideWallHole(profW/2,wallThk+sideTNutOffset);
+                /*v6.02*///tnutSideWallHole(profW/2,wallThk+sideTNutInset);
             }
         }
         
@@ -386,5 +388,5 @@ module full() {
 
 }
 
-part(PART,SIDE,ENDSTOPS);
-//full();
+//part(PART,SIDE,ENDSTOPS);
+full();
