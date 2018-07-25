@@ -25,6 +25,7 @@
  | 2018/07/18 | v5     |Ph.Gregoire |Endstop mount, zendstop arm, pulley raiser
  | 2018/07/25 | v5.1   |Ph.Gregoire |Fix pulley raiser
  | 2018/07/26 | v6.01  |Ph.Gregoire |Fix dimentional issues: sides too high
+ | 2018/07/26 | v6.02  |Ph.Gregoire |Remove unusable TNut hole
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -212,7 +213,7 @@ module basePlate(isLeft) {
 		trcyl(wallThk+profW/2+profW,wallThk+profW/2,thk+tenonHeight-assemblyScrewHeadThk,assemblyScrewHeadDiam,assemblyScrewHeadThk+$_EPSILON);
 		
         // Holes for the 3 TNuts
-		tnutTopPlateHole(profW/2+wallThk,wallThk+tnutHammerDiam/2,0);
+		/*v6.02*/ //tnutTopPlateHole(profW/2+wallThk,wallThk+tnutHammerDiam/2,0);
 		tnutTopPlateHole(profW/2+wallThk,lFront-tnutScrewDistFromEdge);
 		tnutTopPlateHole(lSide-tnutScrewDistFromEdge,profW/2+wallThk);
         
@@ -232,7 +233,7 @@ module sideWithLeg(l,isFront) {
     else
     rotate([0,-90,-90])
     difference() {
-        #linear_extrude(height=wallThk,convexity=2)
+        linear_extrude(height=wallThk,convexity=2)
             offset(r=champR,$fn=$_FN_CHAMP)
             polygon(points=[[0,champR],
                             [profW*2-champR,champR],
@@ -260,7 +261,7 @@ module sides() {
             
             // Front side with two holes
             sideWithLeg(lFront,false) {
-                tnutSideWallHole(profW/2,wallThk+sideTNutOffset);
+                /*v6.02*///tnutSideWallHole(profW/2,wallThk+sideTNutOffset);
             }
         }
         
