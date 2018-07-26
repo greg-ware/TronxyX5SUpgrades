@@ -8,6 +8,8 @@
  * Note that most dimensions are not arbitrary, and computed from physical
  * values of the printer and pulleys, designed so that belts run parallel 
  * to axis movements
+ * 
+ * Full Tronxy model requires 2020profile.scad from https://www.thingiverse.com/thing:2533048/files
  *
  * The design is inspired but not quite remixed from several existing
  * ones available notably on Thingiverse
@@ -30,6 +32,7 @@
  | 2018/07/26 | v6.04  |Ph.Gregoire |Through-holes to access or replace corner screws
  | 2018/07/26 | v6.05  |Ph.Gregoire |Switches repositioning
  | 2018/07/26 | v6.06  |Ph.Gregoire |Side T-Nut repositioning
+ | 2018/07/26 | v7.0   |Ph.Gregoire |Full Tronxy model reconstitution
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -47,11 +50,12 @@ use <phgUtils.scad>
     - pulley raiser
 */
 SIDE="LEFT";
-//SIDE="RIGHT";
+SIDE="RIGHT";
 
 PART="CORNER";
 //PART="RAISER";
 //PART="ZENDSTOP";    // Generate the Z endstop support
+//PART="CORNER_RAISER";
 
 /* Modify following depending if endstop is Left or right, or to print Z endstop arm */
 ENDSTOPS="LEFT";
@@ -154,6 +158,8 @@ $_FN_CHAMP=16;
 
 // Epsilon
 $_EPSILON=0.2;
+
+function getX5SPhysics()=[thk,wallThk,profW,ENDSTOPS,[outerAxleX,outerAxleY],[innerAxleX,innerAxleY]];
 
 module tnutHole(tx,ty,seatDepth,h) {
 	translate([tx,ty,-$_EPSILON]) {
@@ -293,6 +299,7 @@ module _corner(isLeft,isEndStops) {
         union() {
             basePlate(isLeft);
             sides();
+            children();
         }
         if(isEndStops) {
             // Holes for switch
@@ -325,40 +332,28 @@ module zEndstopArm(isLeft) {
 module pulleyRaiser(isLeft) {
     tr(0,0,pulleyHeight) mirror([0,0,1]) difference() {
         cylinder(d=pulleyRaiserDiam,h=pulleyHeight,$fn=$_FN_CYL*2);
-        pulleyShaftNut(0,0,pulleyHeight);
+        shaftHoleScrewHexNut(0,0,pulleyHeight,pulleyAxleDiam,pulleyAxleHeadThk,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,false);
+       
+        //pulleyShaftNut(0,0,pulleyHeight);
 		if(!isLeft) {
-            // drill a hole for screwing the T-Nut
-  trcyl_eps(profW/2-outerAxleX,tnutHammerDiam/2-outerAxleY,0,tnutScrewDiam,pulleyHeight);
+            // drill a hole to access for screwing the T-Nut
+  trcyl_eps(0,outerAxleX,0,assemblyScrewHeadDiam,pulleyHeight);
 		}
     }
 }
 
-module X20x20(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
-    color("grey")
-    trrot(x,y,z,ax,ay,az)
-    linear_extrude(height = length, center = false, convexity = 10)
-		import(file = "20X20_KJN992888.dxf");//, layer = "plate");
-}
-
-module X20x40(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
-    color("grey")
-    for(dx=[-profW/2,profW/2]) {
-        trrot(x+dx,y,z,ax,ay,az)
-            linear_extrude(height = length, center = false, convexity = 10)
-                import(file = "20X20_KJN992888.dxf");
-    }
-}
-
 module part(partType,side,endStops) {
+    isLeft=side=="LEFT";
+    isRight=side=="RIGHT";
     if(partType=="CORNER") {
-		if(side=="LEFT") {
+		if(isLeft) {
 			// Build for left
-			_corner(true,endStops=="LEFT");
-		} else if(side=="RIGHT") {
+			_corner(true,endStops==side) children();
+		} else if(isRight) {
 			// Mirror and build for right
 			rotate([0,0,90]) {
 				mirror([0,1,0]) {
-					_corner(false,endStops=="RIGHT");
+					_corner(false,endStops==side) children();
 				}
 			}
 		} else {
@@ -368,25 +363,12 @@ module part(partType,side,endStops) {
         pulleyRaiser(side=="LEFT");
     } else if(partType=="ZENDSTOP") {
         zEndstopArm(endStops=="LEFT");
+    } else if(partType=="CORNER_RAISER") {
+        part("CORNER",side,endStops)
+        trrot(wallThk+((isLeft)?innerAxleX:outerAxleX),wallThk+(isLeft?innerAxleY:outerAxleY),0,180) part("RAISER",side,endStops);
     } else {
         echo("Set value of PART properly!");
     }
 }
 
-FRONTBAR=490;
-SIDEBAR=490;
-HEIGHT=500;
-module full() {
-    trrot(-wallThk,FRONTBAR/2+wallThk,-thk,0,0,-90) part("CORNER","RIGHT",ENDSTOPS);
-    tr(-wallThk,-FRONTBAR/2-wallThk,-thk) part("CORNER","LEFT",ENDSTOPS);
-    
-    X20x20(FRONTBAR,profW/2,FRONTBAR/2,profW/2,90);
-    for(s=[-1,1]) {
-        X20x20(SIDEBAR,profW,s*(FRONTBAR-profW)/2,profW/2,0,90);
-        X20x40(HEIGHT,profW,s*(FRONTBAR-profW)/2,profW,0,0);
-    }
-
-}
-
-//part(PART,SIDE,ENDSTOPS);
-full();
+part(PART,SIDE,ENDSTOPS);
