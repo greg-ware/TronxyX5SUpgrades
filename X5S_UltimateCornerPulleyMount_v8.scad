@@ -33,6 +33,8 @@
  | 2018/07/26 | v6.05  |Ph.Gregoire |Switches repositioning
  | 2018/07/26 | v6.06  |Ph.Gregoire |Side T-Nut repositioning
  | 2018/07/26 | v7.0   |Ph.Gregoire |Full Tronxy model reconstitution
+ | 2018/10/14 | v8.0   |Ph.Gregoire |Use Conical head side TNut screws
+ | 2018/10/14 | v8.01  |Ph.Gregoire |Add rigidification slits on the sides
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -50,12 +52,13 @@ use <phgUtils.scad>
     - pulley raiser
 */
 SIDE="LEFT";
-SIDE="RIGHT";
+//SIDE="RIGHT";
 
 PART="CORNER";
 //PART="RAISER";
 //PART="ZENDSTOP";    // Generate the Z endstop support
 //PART="CORNER_RAISER";
+PART="SLITS";
 
 /* Modify following depending if endstop is Left or right, or to print Z endstop arm */
 ENDSTOPS="LEFT";
@@ -67,6 +70,9 @@ thk=10;
 
 // Thickness of external side walls
 wallThk=5;
+
+// Layer Height
+layerH=0.2;
 
 // champfer radius
 champR=4;
@@ -83,13 +89,28 @@ lSide=60;	// length along side (y)
 /* Below are the physical characteristics and dimensions of the new pulleys and axles */
 pulleyDiam=12;
 pulleyAxleDiam=5;	// pulley axles diameter
-pulleyAxleHeadThk=3.4;  // thickness of screwHead (M5) - keep mult of layer height
-pulleyAxleHeadDiam=11.5; 	// Diameter of the M5 screw head
 pulleyAxleHexThk=2.6;   // thickness of hex nut (M5) - keep mult of layer height
+
+pulleyAxleHeadThk=3.6;  // thickness of screwHead (M5) - keep mult of layer height
+
+/* M5x30 Axle screw */
+pulleyAxleHeadDiam=11.5; 	// Diameter of the M5 screw head
+pulleyAxleHeadThk=3.6;  // thickness of screwHead (M5) - keep mult of layer height
+
+/* M5x50 Axle Screw (Poeliers) 
+pulleyAxleHeadDiam=12; 	// Diameter of the M5 screw head
+pulleyAxleHeadThk=2.8;  // thickness of screwHead (M5) - keep mult of layer height
+*/
+
 pulleyAxleHexDiam=9.5;  // diameter of hex nut (M5)
 
 pulleyRaiserDiam=18;
 pulleyHeight=8; // to determine raiser height
+
+/* Rigidification slits 
+   The slits will be sliced across the top plate and half way into the height */
+slitDepth=3;
+slitWidth=10;
 
 /********************************************************/
 /* Fixed constants of X5S by construction               */
@@ -114,7 +135,9 @@ tnutScrewDistFromEdge=6;    // distance from edge of top plate tnut screw
 // side TNut positioning, this is more or less arbitrary
 sideTNutInset=0; /*v6.06*///profW/2; // How much to inset the TNut holes on the sides
 sideTNutOffset=3*profW/2; // How much to offset the TNut holes on the sides
-sideTNutSeatDepth=1.4;  // slightly countersunken side screw heads
+// Conical side TNut screw heads
+sideTNutSeatDepth=2.4;  // slightly countersunken side screw heads (Was 1.4)
+sideTNutScrewDiam=7.4;
 
 // Endstops
 endsHolesDiam=1;    // Diameter of the drill hole
@@ -168,12 +191,19 @@ module tnutHole(tx,ty,seatDepth,h) {
 	}
 }
 
+module tnutConicalHole(tx,ty,seatDepth,h) {
+	translate([tx,ty,-$_EPSILON]) {
+		cylinder(d1=tnutScrewSeatDiam,d2=tnutScrewDiam,h=seatDepth+2*$_EPSILON,$fn=$_FN_CYL);
+		cylinder(d=tnutScrewDiam,h=h+2*$_EPSILON,$fn=$_FN_CYL);
+	}
+}
+
 module tnutTopPlateHole(tx,ty) {
     tnutHole(tx,ty,tnutScrewSeatDepth,thk);
 }
 
 module tnutSideWallHole(tx,ty) {
-    tnutHole(tx,ty,sideTNutSeatDepth,wallThk);
+    tnutConicalHole(tx,ty,sideTNutSeatDepth,wallThk);
 }
 
 module shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew=true,isTop=false) {
@@ -294,6 +324,36 @@ module sides() {
     }
 }
 
+module _sideSlits() {
+    _twoSlits(true,slitWidth,slitDepth);
+    _twoSlits(false,slitWidth,slitDepth);  
+}
+
+module _twoSlits(isSide,sw,sd,deltaH=0) {
+    _sideSlit(profW/2,thk+profW-deltaH,isSide?0:1,sw,sd);
+    _sideSlit((isSide?lSide:lFront)-profW,thk+profW/2-deltaH,isSide?0:1,sw,sd);
+}
+
+module _sideSlit(x,l,m=0,sw,sd) {
+    rotate([0,0,90*m]) {
+        translate([x,0,0]) {
+            mirror([0,m,0]) _slit(l,sw,sd);
+        }
+    }
+}
+
+module _slit(l,sw,sd) {
+    intersection() {
+        linear_extrude(l) {
+            polygon([[sd,0],[0,sd],[sw,sd],[sw-sd,0]]);
+        }
+        union() {
+            trcube(0,0,0,sw,sd,l-sw/2);
+            trrot(sw/2,sd,l-sw/2,90,0,0) cylinder(d1=sw,d2=sw-sd*2,h=sd);
+        }
+    }
+}
+
 module _corner(isLeft,isEndStops) {
     difference() {
         union() {
@@ -301,6 +361,7 @@ module _corner(isLeft,isEndStops) {
             sides();
             children();
         }
+        _sideSlits();
         if(isEndStops) {
             // Holes for switch
             for(dx=[0,endsXHolesMegaGantryOffset/2,endsXHolesMegaGantryOffset,3*endsXHolesMegaGantryOffset/2]) {
@@ -366,6 +427,10 @@ module part(partType,side,endStops) {
     } else if(partType=="CORNER_RAISER") {
         part("CORNER",side,endStops)
         trrot(wallThk+((isLeft)?innerAxleX:outerAxleX),wallThk+(isLeft?innerAxleY:outerAxleY),0,180) part("RAISER",side,endStops);
+    } else if(partType=="SLITS") {
+        trrot(0,0,slitDepth,-90,0,0) {
+            _twoSlits(true,slitWidth-layerH*2,slitDepth-layerH,layerH);
+        }
     } else {
         echo("Set value of PART properly!");
     }

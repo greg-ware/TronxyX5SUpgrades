@@ -14,6 +14,7 @@
  | History
  | Date       |Version |Author      |Description
  | 2018/07/26 | v7.0   |Ph.Gregoire |Tronxy model reconstitution
+ | 2018/10/15 | v8.01  |Ph.Gregoire |Use slits
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -25,7 +26,7 @@
 */
 
 use <phgUtils.scad>
-use <X5S_UltimateCornerPulleyMount_v7.scad>
+use <X5S_UltimateCornerPulleyMount_v8.scad>
 use <2020profile.scad>
 
 FRONTBAR=490;
@@ -58,9 +59,14 @@ module X20x40(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
 }
 
 module fullModel() {
-    trrot(-wallThk,FRONTBAR/2+wallThk,-thk,0,0,-90) part("CORNER_RAISER","RIGHT",ENDSTOPS);
-    
-    trrot(-wallThk,-FRONTBAR/2-wallThk,-thk) part("CORNER_RAISER","LEFT",ENDSTOPS);
+    trrot(-wallThk,FRONTBAR/2+wallThk,-thk,0,0,-90) {
+        part("CORNER_RAISER","RIGHT",ENDSTOPS);
+        #part("SLITS","LEFT",ENDSTOPS);
+    }
+        
+    trrot(-wallThk,-FRONTBAR/2-wallThk,-thk) {
+        part("CORNER_RAISER","LEFT",ENDSTOPS);
+    }
     
     X20x20(FRONTBAR,profW/2,FRONTBAR/2,profW/2,90);
     for(s=[-1,1]) {
@@ -69,6 +75,8 @@ module fullModel() {
     }
     
     trrot(0,-FRONTBAR/2-wallThk,profW*2,-90,-90) part("ZENDSTOP","LEFT",ENDSTOPS);
+    
+    
 }
 
 //part(PART,SIDE,ENDSTOPS);
