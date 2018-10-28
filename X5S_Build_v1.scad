@@ -46,7 +46,13 @@ tenonWidth=6;
 
 // Size of the corner plate. Original is 
 lFront=65;	// length along front (x)
-lSide=60;	// length along side (y)
+lSide=profW*3;	// length along side (y)
+
+// Length of the stepper mount side
+lSideStepper=profW*2.5;
+
+// top plate tnut positioning, this is somewhat arbitrary
+tnutScrewDistFromEdge=6;    // distance from edge of top plate tnut screw
 
 /* Below are the physical characteristics and dimensions of the new pulleys and axles */
 pulleyDiam=12;

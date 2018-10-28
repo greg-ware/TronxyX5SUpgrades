@@ -41,10 +41,7 @@ assemblyScrewDiam=5;
 tnutScrewDiam=4;
 tnutScrewSeatDiam=7.5;  // Diameter of the screw head
 tnutHammerDiam=12;      // Diameter of the diagonal of the hammer nut
-
-// top plate tnut positioning, this is somewhat arbitrary
 tnutScrewSeatDepth=4;       // original has 8mm thickness
-tnutScrewDistFromEdge=6;    // distance from edge of top plate tnut screw
 
 // side TNut positioning, this is more or less arbitrary
 sideTNutInset=0; /*v6.06*///profW/2; // How much to inset the TNut holes on the sides
@@ -77,4 +74,3 @@ stepperScrewSpacing=31;
 stepperScrewDiam=3;
 stepperScrewHeadDiam=6;
 stepperScrewHeadThk=2;
-lSideStepper=profW*2;

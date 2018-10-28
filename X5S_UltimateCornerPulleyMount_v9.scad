@@ -89,52 +89,6 @@ yNotch=wallThk+innerAxleY+pulleyAxleDiam;
 
 function getX5SPhysics()=[thk,wallThk,profW,ENDSTOPS,[outerAxleX,outerAxleY],[innerAxleX,innerAxleY]];
 
-module tnutHole(tx,ty,seatDepth,h) {
-	translate([tx,ty,-$_EPSILON]) {
-		cylinder(d=tnutScrewSeatDiam,h=seatDepth+2*$_EPSILON,$fn=$_FN_CYL);
-		cylinder(d=tnutScrewDiam,h=h+2*$_EPSILON,$fn=$_FN_CYL);
-	}
-}
-
-module tnutConicalHole(tx,ty,seatDepth,h) {
-	translate([tx,ty,-$_EPSILON]) {
-		cylinder(d1=tnutScrewSeatDiam,d2=tnutScrewDiam,h=seatDepth+2*$_EPSILON,$fn=$_FN_CYL);
-		cylinder(d=tnutScrewDiam,h=h+2*$_EPSILON,$fn=$_FN_CYL);
-	}
-}
-
-module tnutTopPlateHole(tx,ty) {
-    tnutHole(tx,ty,tnutScrewSeatDepth,thk);
-}
-
-module tnutSideWallHole(tx,ty) {
-    tnutConicalHole(tx,ty,sideTNutSeatDepth,wallThk);
-}
-
-module shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew=true,isTop=false) {
-    // make recess for pulley axle screw head
-    if(isScrew) {
-        trcyl_eps(x,y,isTop?0:t-screwHeadThk,screwHeadDiam,screwHeadThk);
-    }
-    
-    // shaft for pulley axle screw
-    trcyl_eps(x,y,0,screwDiam,t);
-}
-
-module shaftHoleScrewHexNut(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,screwHexThk,screwHexDiam,isScrew=true,isHexNut=true) {
-    
-    shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew);
-
-    // Imprint of hex nut
-    if(isHexNut) {
-        trcyl_eps(x,y,0,screwHexDiam,screwHexThk,fn=6);
-    }
-}   
-
-module pulleyShaftHole(x,y,isScrew,isHexNut) {
-    shaftHoleScrewHexNut(x+wallThk,y+wallThk,thk+tenonHeight,pulleyAxleDiam,pulleyAxleHeadThk+tenonHeight,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,isScrew,isHexNut);
-}
-
 module basePlate(isLeft) {
 	difference() {
 		union() {
@@ -151,26 +105,15 @@ module basePlate(isLeft) {
                             [champRPlate,lFront-champRPlate],
                             [champRPlate,champRPlate]]);
 			}
-            
-			// tenon along Front
-            tenonFront_Pos=wallThk;//+outerAxleY+pulleyAxleHeadDiam/2;
-            trcube(wallThk+profW/2-tenonWidth/2,tenonFront_Pos,thk,
-              tenonWidth,lFront-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonFront_Pos,tenonHeight);
+            // add tenons
+			
+			tenons(wallThk,wallThk,
+				lSide-tnutScrewDistFromEdge-tnutHammerDiam/2-wallThk-profW,
+				lFront-tnutScrewDistFromEdge-tnutHammerDiam/2-wallThk);
+		}
+		
+		assemblyScrews(wallThk+profW/2,wallThk+profW/2);
 
-			// tenon along Side
-            tenonSide_Pos=wallThk+max(outerAxleX+pulleyAxleHeadDiam/2,profW);
-			trcube(tenonSide_Pos,wallThk+profW/2-tenonWidth/2,thk,
-              lSide-tnutScrewDistFromEdge-tnutHammerDiam/2-tenonSide_Pos,tenonWidth,tenonHeight);
-		}
-        // Remove hole for the head of the profiles assembly screws
-        // The position of that is in the middle of the second profile
-        for(p=[1,3]) {
-            x=wallThk+p*profW/2;
-            y=wallThk+profW/2;
-            trcyl(x,y,thk+tenonHeight-assemblyScrewHeadThk,assemblyScrewHeadDiam,assemblyScrewHeadThk+$_EPSILON);
-            shaftHoleScrew(x,y,thk+tenonHeight,assemblyScrewDiam,assemblyScrewHeadThk,assemblyScrewHeadDiam,true,true);
-		}
-        
         // Holes for the 3 TNuts
 		/*v6.02*/ //tnutTopPlateHole(profW/2+wallThk,wallThk+tnutHammerDiam/2,0);
 		tnutTopPlateHole(profW/2+wallThk,lFront-tnutScrewDistFromEdge);
@@ -229,36 +172,6 @@ module sides() {
     }
 }
 
-module _sideSlits() {
-    _twoSlits(true,slitWidth,slitDepth);
-    _twoSlits(false,slitWidth,slitDepth);  
-}
-
-module _twoSlits(isSide,sw,sd,deltaH=0) {
-    _sideSlit(profW/2,thk+profW-deltaH,isSide?0:1,sw,sd);
-    _sideSlit((isSide?lSide:lFront)-profW,thk+profW/2-deltaH,isSide?0:1,sw,sd);
-}
-
-module _sideSlit(x,l,m=0,sw,sd) {
-    rotate([0,0,90*m]) {
-        translate([x,0,0]) {
-            mirror([0,m,0]) _slit(l,sw,sd);
-        }
-    }
-}
-
-module _slit(l,sw,sd) {
-    intersection() {
-        linear_extrude(l) {
-            polygon([[sd,0],[0,sd],[sw,sd],[sw-sd,0]]);
-        }
-        union() {
-            trcube(0,0,0,sw,sd,l-sw/2);
-            trrot(sw/2,sd,l-sw/2,90,0,0) cylinder(d1=sw,d2=sw-sd*2,h=sd);
-        }
-    }
-}
-
 module _corner(isLeft,isEndStops) {
     difference() {
         union() {
@@ -266,7 +179,11 @@ module _corner(isLeft,isEndStops) {
             sides();
             children();
         }
+		
+		// Remove slits for ABS
         _sideSlits();
+		
+		// If this is the side which has the ends stops, drill the screw holes
         if(isEndStops) {
             // Holes for switch
             for(dx=[0,endsXHolesMegaGantryOffset/2,endsXHolesMegaGantryOffset,3*endsXHolesMegaGantryOffset/2]) {
