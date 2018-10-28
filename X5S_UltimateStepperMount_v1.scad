@@ -137,31 +137,34 @@ module stepperWall(isLeft) {
 	}
 }
 
-_SLITS_POS=[[frameXOff-slitWidth/2,thk+2*profW],
-			[stepperHeight/2-slitWidth/2,thk+stepperHeight/2],
-			[frameXOff+2*profW-slitWidth/2,thk+profW]];
+_SLITS_POS=[[0,thk+profW*2-champRPlate],
+            [stepperHeight/2-slitWidth/2,thk+stepperHeight/2-slitDepth/2],
+            [frameXOff-slitWidth/2,thk+2*profW-champRPlate],
+			[frameXOff+2*profW-slitWidth/2,thk+profW]
+            ];
 module stepperMotorMount(isLeft) {
 	difference() {
 		union() {
 			stepperTopPlate(isLeft);
 			stepperSide(isLeft);
-			stepperWall(isLeft);
+			#stepperWall(isLeft);
 		}
 							
 		// Side slits
 		translate([0,-wallThk,0]) {
-			for(s=[0:1:2]) {
+			for(s=[1:len(_SLITS_POS)-1]) {
 				_sideSlit(_SLITS_POS[s][0],_SLITS_POS[s][1]);
 			}
 		}
-	}
+        trrot(stepperWidth,stepperWidth/2+slitWidth/2,0,0,0,-90) _sideSlit(0,thk+profW*2-champRPlate);
+        }
 }
 
 //stepperMotorMount(isLeft=SIDE=="LEFT");
 
 module stepperMotorSlits() {
-	trrot(slitWidth*1.5*3,-wallThk*2,slitDepth,-90,0,180) {
-		for(s=[0:1:2]) {
+	trrot(slitWidth*1.5*len(_SLITS_POS),-wallThk*2,slitDepth,-90,0,180) {
+		for(s=[0:len(_SLITS_POS)-1]) {
 			_sideSlit(s*slitWidth*1.5,_SLITS_POS[s][1]-layerH);
 		}
 	}
