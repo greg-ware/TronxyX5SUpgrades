@@ -35,6 +35,7 @@
  | 2018/07/26 | v7.0   |Ph.Gregoire |Full Tronxy model reconstitution
  | 2018/10/14 | v8.0   |Ph.Gregoire |Use Conical head side TNut screws
  | 2018/10/14 | v8.01  |Ph.Gregoire |Add rigidification slits on the sides
+ | 2018/10/25 | v9.0   |Ph.Gregoire |Reorganize dependencies into separate files
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -45,7 +46,7 @@
  *    Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 */
 
-use <phgUtils.scad>
+use <phgUtils_v1.scad>
 
 /* Modify the following parameter to generate
     - corner for LEFT or RIGHT side 
@@ -58,102 +59,13 @@ PART="CORNER";
 //PART="RAISER";
 //PART="ZENDSTOP";    // Generate the Z endstop support
 //PART="CORNER_RAISER";
-PART="SLITS";
+//PART="SLITS";
 
-/* Modify following depending if endstop is Left or right, or to print Z endstop arm */
-ENDSTOPS="LEFT";
-//ENDSTOPS="RIGHT";
+include <X5S_Physics_v1.scad>
 
-/* Arbitrary parameters */
-// Top plate thickness (original acrylic plate is 8mm, but this makes screw seats thin)
-thk=10;	
+include <X5S_Build_v1.scad>
 
-// Thickness of external side walls
-wallThk=5;
-
-// Layer Height
-layerH=0.2;
-
-// champfer radius
-champR=4;
-champRPlate=3;
-
-// profile tenon dimensions
-tenonHeight=5.5;
-tenonWidth=6;
-
-// Size of the corner plate. Original is 
-lFront=65;	// length along front (x)
-lSide=60;	// length along side (y)
-
-/* Below are the physical characteristics and dimensions of the new pulleys and axles */
-pulleyDiam=12;
-pulleyAxleDiam=5;	// pulley axles diameter
-pulleyAxleHexThk=2.6;   // thickness of hex nut (M5) - keep mult of layer height
-
-pulleyAxleHeadThk=3.6;  // thickness of screwHead (M5) - keep mult of layer height
-
-/* M5x30 Axle screw */
-pulleyAxleHeadDiam=11.5; 	// Diameter of the M5 screw head
-pulleyAxleHeadThk=3.6;  // thickness of screwHead (M5) - keep mult of layer height
-
-/* M5x50 Axle Screw (Poeliers) 
-pulleyAxleHeadDiam=12; 	// Diameter of the M5 screw head
-pulleyAxleHeadThk=2.8;  // thickness of screwHead (M5) - keep mult of layer height
-*/
-
-pulleyAxleHexDiam=9.5;  // diameter of hex nut (M5)
-
-pulleyRaiserDiam=18;
-pulleyHeight=8; // to determine raiser height
-
-/* Rigidification slits 
-   The slits will be sliced across the top plate and half way into the height */
-slitDepth=3;
-slitWidth=10;
-
-/********************************************************/
-/* Fixed constants of X5S by construction               */
-profW=20;	// width of profile
-motorShaftInset=20; // Distance from outside frame by which the motors shafts are inset
-motorPulleyDiam=12; // Diameter of the motor pulley
-
-// X-profile Assembly screws characteristics
-assemblyScrewHeadDiam=9;
-assemblyScrewHeadThk=2.5;
-assemblyScrewDiam=5;
-
-// T-nut screw dimensions
-tnutScrewDiam=4;
-tnutScrewSeatDiam=7.5;  // Diameter of the screw head
-tnutHammerDiam=12;      // Diameter of the diagonal of the hammer nut
-
-// top plate tnut positioning, this is somewhat arbitrary
-tnutScrewSeatDepth=4;       // original has 8mm thickness
-tnutScrewDistFromEdge=6;    // distance from edge of top plate tnut screw
-
-// side TNut positioning, this is more or less arbitrary
-sideTNutInset=0; /*v6.06*///profW/2; // How much to inset the TNut holes on the sides
-sideTNutOffset=3*profW/2; // How much to offset the TNut holes on the sides
-// Conical side TNut screw heads
-sideTNutSeatDepth=2.4;  // slightly countersunken side screw heads (Was 1.4)
-sideTNutScrewDiam=7.4;
-
-// Endstops
-endsHolesDiam=1;    // Diameter of the drill hole
-endsHolesSpacing=10;// Spacing between the two screw holes
-endsWidth=20;       // With of the endstop boxing
-
-endsSwitchDepth=9;  // Distance from holes at which endstop closes
-endsXHolesMegaGantryOffset=20; // How much to offset the holes for mega-gantry
-
-// Z endstop support will be bolted on 20x40 frame
-endsZSupportWidth=15;
-endsZSupportLength=110;
-switchHolesDiam=1.5;
-switchHolesSpacing=10;
-switchWidth=20;
-switchHolesOffset=7.5;
+include <X5S_Utils_v1.scad>
 
 /************************************************************************/
 /* Begin computations                                                   */
@@ -174,13 +86,6 @@ wSide=profW+wallThk;	// width along sides (y)
 // positions of shoulder notch: leave enough material for robustness
 xNotch=wallThk+innerAxleX+pulleyAxleDiam+wallThk;
 yNotch=wallThk+innerAxleY+pulleyAxleDiam;
-
-// Cylinders $fn default
-$_FN_CYL=32;
-$_FN_CHAMP=16;
-
-// Epsilon
-$_EPSILON=0.2;
 
 function getX5SPhysics()=[thk,wallThk,profW,ENDSTOPS,[outerAxleX,outerAxleY],[innerAxleX,innerAxleY]];
 

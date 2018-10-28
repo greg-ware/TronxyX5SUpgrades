@@ -25,8 +25,10 @@
  *    Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 */
 
-use <phgUtils.scad>
-use <X5S_UltimateCornerPulleyMount_v8.scad>
+use <phgUtils_v1.scad>
+
+use <X5S_UltimateCornerPulleyMount_v9.scad>
+use <X5S_UltimateStepperMount_v1.scad>
 use <2020profile.scad>
 
 FRONTBAR=490;
@@ -43,6 +45,10 @@ outerAxleX=X5SPhysics[4][0];
 outerAxleY=X5SPhysics[4][1];
 innerAxleX=X5SPhysics[5][0];
 innerAxleY=X5SPhysics[5][1];
+
+include <X5S_Physics_v1.scad>
+
+include <X5S_Build_v1.scad>
 
 module XProfile(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
      color("grey") trrot(x,y,z,ax,ay,az)
@@ -75,8 +81,7 @@ module fullModel() {
     }
     
     trrot(0,-FRONTBAR/2-wallThk,profW*2,-90,-90) part("ZENDSTOP","LEFT",ENDSTOPS);
-    
-    
+    trrot(SIDEBAR+lSideStepper+wallThk+profW,FRONTBAR/2,-thk,0,0,180) stepperMotorMount(true);
 }
 
 //part(PART,SIDE,ENDSTOPS);
