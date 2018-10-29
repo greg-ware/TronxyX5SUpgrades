@@ -16,6 +16,7 @@
  * History
  * Date       Version Author      Description
  * 2018/07/26  v1     Ph.Gregoire Initial version(s)
+ * 2018/10/29  v2     Ph.Gregoire Fix Stepper hole size
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -69,7 +70,7 @@ switchHolesOffset=7.5;
 // Stepper characteristics
 stepperWidth=42;
 stepperHeight=40;
-stepperHoleDiam=22;
+stepperHoleDiam=24;
 stepperScrewSpacing=31;
 stepperScrewDiam=3;
 stepperScrewHeadDiam=6;

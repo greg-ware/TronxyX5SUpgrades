@@ -15,6 +15,7 @@
  | Date       |Version |Author      |Description
  | 2018/07/26 | v7.0   |Ph.Gregoire |Tronxy model reconstitution
  | 2018/10/15 | v8.01  |Ph.Gregoire |Use slits
+ | 2018/10/29 | v9     |Ph.Gregoire |Add stepper mounts
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -27,28 +28,30 @@
 
 use <phgUtils_v1.scad>
 
+include <X5S_Build_v2.scad>
+
 use <X5S_UltimateCornerPulleyMount_v9.scad>
-use <X5S_UltimateStepperMount_v1.scad>
+use <X5S_UltimateStepperMount_v2.scad>
 use <2020profile.scad>
+
 
 FRONTBAR=490;
 SIDEBAR=490;
 HEIGHT=500;
 
-X5SPhysics=getX5SPhysics();
+//X5SPhysics=getX5SPhysics();
 
-thk=X5SPhysics[0];
-wallThk=X5SPhysics[1];
-profW=X5SPhysics[2];
+//thk=X5SPhysics[0];
+//wallThk=X5SPhysics[1];
+//profW=X5SPhysics[2];
+/*
 ENDSTOPS=X5SPhysics[3];
 outerAxleX=X5SPhysics[4][0];
 outerAxleY=X5SPhysics[4][1];
 innerAxleX=X5SPhysics[5][0];
 innerAxleY=X5SPhysics[5][1];
+*/
 
-include <X5S_Physics_v1.scad>
-
-include <X5S_Build_v1.scad>
 
 module XProfile(length,x=0,y=0,z=0,ax=0,ay=0,az=0) {
      color("grey") trrot(x,y,z,ax,ay,az)

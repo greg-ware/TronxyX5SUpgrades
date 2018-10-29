@@ -46,8 +46,6 @@
  *    Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 */
 
-use <phgUtils_v1.scad>
-
 /* Modify the following parameter to generate
     - corner for LEFT or RIGHT side 
     - pulley raiser
@@ -61,33 +59,9 @@ PART="CORNER";
 //PART="CORNER_RAISER";
 //PART="SLITS";
 
-include <X5S_Physics_v1.scad>
-
-include <X5S_Build_v1.scad>
-
-include <X5S_Utils_v1.scad>
-
-/************************************************************************/
-/* Begin computations                                                   */
-/* Following parameters are computed from physical dimensions above     */
-
-// positioning of outer pulley axle
-outerAxleX=profW/2;
-outerAxleY=motorShaftInset+(pulleyDiam-motorPulleyDiam)/2;
-
-// positioning of inner pulley axle
-innerAxleX=profW+pulleyAxleHeadDiam/2;
-innerAxleY=outerAxleY+pulleyDiam;
-
-// Compute overall widths
-wFront=profW+wallThk;	// width along front (x)
-wSide=profW+wallThk;	// width along sides (y)
-
-// positions of shoulder notch: leave enough material for robustness
-xNotch=wallThk+innerAxleX+pulleyAxleDiam+wallThk;
-yNotch=wallThk+innerAxleY+pulleyAxleDiam;
-
-function getX5SPhysics()=[thk,wallThk,profW,ENDSTOPS,[outerAxleX,outerAxleY],[innerAxleX,innerAxleY]];
+use <phgUtils_v1.scad>
+include <X5S_Build_v2.scad>
+use <X5S_Utils_v1.scad>
 
 module basePlate(isLeft) {
 	difference() {

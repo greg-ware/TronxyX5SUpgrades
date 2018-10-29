@@ -31,8 +31,7 @@
 */
 
 use <phgUtils_v1.scad>
-include <X5S_Physics_v1.scad>
-include <X5S_Build_v1.scad>
+include <X5S_Build_v2.scad>
 
 module tnutHole(tx,ty,seatDepth,h) {
 	translate([tx,ty,-$_EPSILON]) {

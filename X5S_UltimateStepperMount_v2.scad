@@ -16,6 +16,7 @@
  * History
  * Date       Version Author      Description
  * 2018/10/20  v1     Ph.Gregoire Initial version
+ * 2018/10/29  v2     Ph.Gregoire Final version
  +-------------------------------------------------------------------------
  *
  *  This work is licensed under the 
@@ -35,13 +36,10 @@ use <phgUtils_v1.scad>
 SIDE="LEFT";
 //SIDE="RIGHT";
 
-// Physical defs of X5S
-include <X5S_Physics_v1.scad>
-
 // Parts build constants
-include <X5S_Build_v1.scad>
+include <X5S_Build_v2.scad>
 
-include <X5S_Utils_v1.scad>
+use <X5S_Utils_v1.scad>
 
 /* computed constants */
 frameXOff=stepperWidth+wallThk;
@@ -79,13 +77,14 @@ champRPlate=3;
 		
 		// TNut holes
 		tnutTopPlateHole(frameXOff+lSideStepper-tnutScrewDistFromEdge,profW/2);
-		tnutTopPlateHole(frameXOff+profW/2,2*profW-tnutScrewDistFromEdge);
+		tnutTopPlateHole(frameXOff+profW/2,stepperWidth-tnutScrewDistFromEdge);
 		
 		// Holes for frame assembly screws access
 		assemblyScrews(frameXOff+profW/2,profW/2);
 	}
 }
 
+/* Side flange */
 module stepperSide(isLeft) {
 	trrot(0,0,0,90,0,0) {
 		difference() {
@@ -108,9 +107,7 @@ module stepperSide(isLeft) {
 				roundedBoundingBox(stepperWidth+lSideStepper+wallThk,thk+stepperHeight,frameXOff,champRPlate,champR,champRPlate,$fn=$_FN_CHAMP);
 			}
 			
-			// Side screw heads
-			//trrot(frameXOff+profW/2,thk+3*profW/2,wallThk,0,180,0) tnutSideWallHole(0,0);
-			
+			// Side screw heads			
 			tnutSideWallHole(frameXOff+profW/2,thk+3*profW/2,true);
 			tnutSideWallHole(frameXOff+3*profW/2,thk+profW/2,true);
 		}
@@ -147,7 +144,7 @@ module stepperMotorMount(isLeft) {
 		union() {
 			stepperTopPlate(isLeft);
 			stepperSide(isLeft);
-			#stepperWall(isLeft);
+			stepperWall(isLeft);
 		}
 							
 		// Side slits
@@ -160,7 +157,6 @@ module stepperMotorMount(isLeft) {
         }
 }
 
-//stepperMotorMount(isLeft=SIDE=="LEFT");
 
 module stepperMotorSlits() {
 	trrot(slitWidth*1.5*len(_SLITS_POS),-wallThk*2,slitDepth,-90,0,180) {
@@ -171,4 +167,4 @@ module stepperMotorSlits() {
 }
 
 stepperMotorSlits();
-stepperMotorMount();
+stepperMotorMount(isLeft=SIDE=="LEFT");
