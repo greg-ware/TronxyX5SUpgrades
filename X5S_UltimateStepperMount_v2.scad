@@ -44,6 +44,14 @@ use <X5S_Utils_v1.scad>
 /* computed constants */
 frameXOff=stepperWidth+wallThk;
 
+// Position and legth of slits (inner slit at index 0, side 1-3)
+_SLITS_POSLEN=[
+    [stepperWidth/2+slitWidth/2,thk+profW*2-champRPlate],
+    [stepperHeight/2-slitWidth/2,thk+stepperHeight/2-slitDepth/2],
+    [frameXOff-slitWidth/2,thk+2*profW-champRPlate],
+    [frameXOff+2*profW-slitWidth/2,thk+profW]
+];
+
 module stepperTopPlate(isLeft) {
 champRPlate=3;	
 	// base plate
@@ -134,37 +142,41 @@ module stepperWall(isLeft) {
 	}
 }
 
-_SLITS_POS=[[0,thk+profW*2-champRPlate],
-            [stepperHeight/2-slitWidth/2,thk+stepperHeight/2-slitDepth/2],
-            [frameXOff-slitWidth/2,thk+2*profW-champRPlate],
-			[frameXOff+2*profW-slitWidth/2,thk+profW]
-            ];
-module stepperMotorMount(isLeft) {
+module stepperMotorMount(isLeft,slitsPosLen=_SLITS_POSLEN) {
+   
 	difference() {
 		union() {
 			stepperTopPlate(isLeft);
 			stepperSide(isLeft);
 			stepperWall(isLeft);
 		}
+
+        // Carve out Middle wall slit groove
+        trrot(stepperWidth,slitsPosLen[0][0],0,0,0,-90) {
+            _slit(slitsPosLen[0][1]);
+        }
 							
-		// Side slits
-		translate([0,-wallThk,0]) {
-			for(s=[1:len(_SLITS_POS)-1]) {
-				_sideSlit(_SLITS_POS[s][0],_SLITS_POS[s][1]);
+		// Carve out Side slits grooves
+        for(s=[1:len(slitsPosLen)-1]) {
+            translate([slitsPosLen[s][0],-wallThk,0]) {
+				_slit(slitsPosLen[s][1]);
 			}
 		}
-        trrot(stepperWidth,stepperWidth/2+slitWidth/2,0,0,0,-90) _sideSlit(0,thk+profW*2-champRPlate);
-        }
+    }
 }
 
-
-module stepperMotorSlits() {
-	trrot(slitWidth*1.5*len(_SLITS_POS),-wallThk*2,slitDepth,-90,0,180) {
-		for(s=[0:len(_SLITS_POS)-1]) {
-			_sideSlit(s*slitWidth*1.5,_SLITS_POS[s][1]-layerH);
+/* Generate the slits positives to fill the grooves
+    slitsPosLen: array of tuples with slit position and length
+    deltaH: height and width delta
+*/
+module stepperMotorSlits(deltaH,slitsPosLen=_SLITS_POSLEN) {
+	// Lay out in a row
+    for(s=[0:len(slitsPosLen)-1]) {
+        trrot(slitWidth*3+slitWidth*s*3/2,-wallThk*2,slitDepth,-90,0,180) {
+            _slit(slitsPosLen[s][1]-deltaH,slitWidth-2*deltaH,slitDepth-deltaH);
 		}
 	}
 }
 
-stepperMotorSlits();
+stepperMotorSlits(layerH);
 stepperMotorMount(isLeft=SIDE=="LEFT");

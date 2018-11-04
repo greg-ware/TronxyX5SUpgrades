@@ -111,7 +111,7 @@ module _sideSlit(x,l,m=0,sw=slitWidth,sd=slitDepth) {
 	sw: slit width
 	sd: slit depth
 */
-module _slit(l,sw,sd) {
+module _slit(l,sw=slitWidth,sd=slitDepth) {
     intersection() {
         linear_extrude(l) {
             polygon([[sd,0],[0,sd],[sw,sd],[sw-sd,0]]);
