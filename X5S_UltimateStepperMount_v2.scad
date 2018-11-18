@@ -178,5 +178,5 @@ module stepperMotorSlits(deltaH,slitsPosLen=_SLITS_POSLEN) {
 	}
 }
 
-stepperMotorSlits(layerH);
+stepperMotorSlits(layerH*2);
 stepperMotorMount(isLeft=SIDE=="LEFT");

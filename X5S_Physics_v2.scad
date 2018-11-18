@@ -75,3 +75,6 @@ stepperScrewSpacing=31;
 stepperScrewDiam=3;
 stepperScrewHeadDiam=6;
 stepperScrewHeadThk=2;
+
+// Thickness of the belt
+beltThk=2;
