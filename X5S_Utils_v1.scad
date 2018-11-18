@@ -67,17 +67,15 @@ module shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew=true,is
 }
 
 module shaftHoleScrewHexNut(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,screwHexThk,screwHexDiam,isScrew=true,isHexNut=true) {
-    
     shaftHoleScrew(x,y,t,screwDiam,screwHeadThk,screwHeadDiam,isScrew);
-
     // Imprint of hex nut
     if(isHexNut) {
         trcyl_eps(x,y,0,screwHexDiam,screwHexThk,fn=6);
     }
 }   
 
-module pulleyShaftHole(x,y,isScrew,isHexNut) {
-    shaftHoleScrewHexNut(x+wallThk,y+wallThk,thk+tenonHeight,pulleyAxleDiam,pulleyAxleHeadThk+tenonHeight,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,isScrew,isHexNut);
+module pulleyShaftHole(x,y,isScrew,isHexNut,offset=wallThk) {
+    shaftHoleScrewHexNut(x+offset,y+offset,thk+tenonHeight,pulleyAxleDiam,pulleyAxleHeadThk+tenonHeight,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,isScrew,isHexNut);
 }
 
 module _sideSlits() {
