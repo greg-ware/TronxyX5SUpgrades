@@ -75,6 +75,9 @@ wheelAxleHeadDiam=9;
 wheelWellDiam=28;   // 23=5.3+2*8.85: wheel base
 wheelWellOffset=12;
 
+wheelPodHeight=5;
+wheelPodDiam=8;
+
 module gantryTopPlate(isLeft,o=champRPlate) {
     // shorthand for offset
     //o=0;
@@ -95,6 +98,7 @@ module gantryTopPlate(isLeft,o=champRPlate) {
     
     // Compute offset of bar so that head is aligned with middle of gantry
     barOffset=gantryLen/2-profW+printHeadOffset;
+    wellThk=thk+profW-wheelWellOffset;
     
 	// base plate
 	difference() {
@@ -140,7 +144,6 @@ module gantryTopPlate(isLeft,o=champRPlate) {
 		}
         
         // Carriage wheels shafts and well
-        wellThk=thk+profW-wheelWellOffset;
         for(i=[0:len(wheelsPos)-1])
             tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1]) {
                 // Screw shaft
@@ -172,8 +175,16 @@ module gantryTopPlate(isLeft,o=champRPlate) {
         }
                    
         // Profile tunnel
-        trcube_eps(0,legWidth-notchMargin,0,gantryLen,notchWidth+2*notchMargin,profW);
+        trcube_eps(0,legWidth-notchMargin,0,gantryLen,notchWidth+2*notchMargin,profW+notchMargin);
 	}
+    
+    for(i=[0:len(wheelsPos)-1]) {        
+        tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1],wellThk-wheelPodHeight)
+            difference() {
+                cylinder(h=wheelPodHeight,d1=wheelPodDiam-notchMargin,d2=legWidth,fn=$_FN_CYL);
+                cyl_eps(h=wheelPodHeight,d=wheelAxlesDiam);
+            }
+    }
 }
 
 difference() {
