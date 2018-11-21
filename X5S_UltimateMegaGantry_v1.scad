@@ -40,185 +40,219 @@ include <X5S_Build_v2.scad>
 
 use <X5S_Utils_v1.scad>
 
-carriageWidth=30;
-printHeadOffset=25;
-
+/* arbitrary size */
 gantryLen=110; //113.85;
 legWidth=20;
+
+gantryHeight=10;    // thickness of gantry plate
+
+armWidth=20;
+armLength=70; //gantryDepth-gantryWidth;
+
+/* offset for the inner wheels */
+frontWheelOff=15;
+rearWheelOff=10;
+
+/* Print head dimensions */
+carriageWidth=30;   // Width of the print head carriage
+printHeadOffset=25;
 
 notchMargin=1;  // margin on each side
 notchWidth=profW;
 notchDepth=0;//notchWidth/2;
 
+wheelSpacing=40;
 
-gantryWidth=legWidth+notchWidth+legWidth;    //71.5;
-gantryHeight=10;
-
-armWidth=20;
-armLength=70; //gantryDepth-gantryWidth;
-
-wheelXOff=legWidth/2;
-wheelXDelta=90;
-wheelYOff=legWidth/2; //12.09;
-wheelSpacing=40; // 40.06;
-frontWheelOff=15;
-rearWheelOff=10;
-
-// Positions of wheels
-wheelsPos=[[0,0,true],
-           [wheelXDelta,0,false],
-           [-rearWheelOff,wheelSpacing,true],
-           [wheelXDelta+frontWheelOff,wheelSpacing,false]];
 wheelAxlesDiam=5; // 5.3
 wheelAxleHeadThk=3;
 wheelAxleHeadDiam=9;
 
 wheelWellDiam=28;   // 23=5.3+2*8.85: wheel base
-//wheelWellOffset=12;
 
-wheelPodHeight=3;
+wheelPodHeight=5;
 wheelPodDiam=7.8;
 
+YBarClearance=7; //7.6;
+
+/* Compute some derived constants shorthands */
+gantryWidth=legWidth+notchWidth+legWidth;    //71.5;
+
+wheelXOff=legWidth/2;
+wheelXDelta=gantryLen-legWidth;
+wheelYOff=legWidth/2;
+
+// Positions of wheels: X,Y, isFront, isInner
+wheelsPos=[[0,0,true,false],
+           [wheelXDelta,0,false,false],
+           [-rearWheelOff,wheelSpacing,true,true],
+           [wheelXDelta+frontWheelOff,wheelSpacing,false,true]];
+
+// Offset of X carriage bar
+barOffset=gantryLen/2-profW+printHeadOffset;
+armOffset=barOffset+profW;
+    
+// The axles are aligned in Y so that the belt aligns with the motor pulley
+function pulleyAxleY()=legWidth+(notchWidth-profW)/2+motorShaftInset+motorPulleyDiam/2+pulleyDiam/2+beltThk;
+function pulleyAxleX(i=1)=barOffset+profW/2-i*(carriageWidth+pulleyDiam)/2;
+    
 module gantryTopPlate(isLeft,o=champRPlate) {
     // shorthand for offset
     //o=0;
     
-    // Offset of X carriage bar
-    barOffset=gantryLen/2-profW+printHeadOffset;
-    armOffset=barOffset+profW;
-    
-    // The axles are aligned in Y so that the belt aligns with the motor pulley
-    function pulleyAxleY()=legWidth+(notchWidth-profW)/2+motorShaftInset+motorPulleyDiam/2+pulleyDiam/2+beltThk;
-    function pulleyAxleX(i=1)=barOffset+profW/2-i*(carriageWidth+pulleyDiam)/2;
-    
     // Compute clearance Width of gantry
     gantryClearance=max(gantryWidth,pulleyAxleY()+pulleyAxleHeadDiam);
     
-    // Adjust notch
+    // Adjust notch if set to 0, we need to take the rounding into account
     notchDepth=notchDepth==0?o:notchDepth;
     
     // Compute offset of bar so that head is aligned with middle of gantry
     barOffset=gantryLen/2-profW+printHeadOffset;
-    //wellThk=thk+profW-wheelWellOffset;
-    
+
 	// base plate
 	difference() {
 		union() {
-            tr(0,0,profW-gantryHeight)
-			linear_extrude(height=thk+gantryHeight,convexity=2) difference() {
-                union() {
-                offset(r=o,$fn=$_FN_CHAMP)
-				polygon(points=[
-                    [o,o],
-                    [gantryLen-o,o],  // Border
-                    // Front Notch
-                    [gantryLen-o,legWidth-o],
-                    [gantryLen-notchDepth-o,legWidth-notchMargin-o],
-                    [gantryLen-notchDepth-o,legWidth+notchWidth+o],
-                    [gantryLen+frontWheelOff-o,legWidth+notchWidth+o],
-                    [gantryLen+frontWheelOff-o,gantryWidth-o],
-                    [pulleyAxleX(-1),gantryWidth-o],
- 
-                    // Bump for pulley shaft clearance
-                    [pulleyAxleX(-1),gantryClearance-o],
-                    [pulleyAxleX(),gantryClearance-o],
-                    [pulleyAxleX(),gantryWidth-o],
-
-                    // Back Notch
-                    [o-rearWheelOff,gantryWidth-o],
-                    [o-rearWheelOff,legWidth+notchWidth+o],
-                    [o+notchDepth,legWidth+notchWidth+o],
-                    [o+notchDepth,legWidth-o],
-                    [o,legWidth-o]
-					]);
-                
-
-                // Support for second X Axis TNut 
-                //translate([armOffset+armWidth,gantryWidth]) circle(profW);
-                translate([armOffset,gantryClearance]) circle(profW);
-                
-                // Bump for pulley axis support
-                translate([pulleyAxleX(),pulleyAxleY()]) circle(pulleyAxleHeadDiam);
-            }
-                
-            // Remove notches
-            for(x=[notchDepth/2+o/2,gantryLen-notchDepth/2-o/2])
-            translate([x,legWidth+notchWidth/2]) circle(d=notchWidth);
-        }
-
-        // Arm
-        //o=0;
-        linear_extrude(height=thk+profW,convexity=2)
-            offset(r=o,$fn=$_FN_CHAMP)   
-                polygon(points=[
-                    // Arm
-                    [gantryLen+frontWheelOff-o,gantryWidth-o],
-                    [gantryLen+frontWheelOff-o,gantryWidth-o],
-                    [armOffset+armWidth+profW-o,gantryWidth-o],
-                    [armOffset+armWidth-o,gantryWidth+profW-o],
-                    [armOffset+armWidth-o,armLength+gantryWidth-o],
-                    [armOffset+o,armLength+gantryWidth-o],
-                    [armOffset+o,legWidth+notchWidth+notchMargin+o],
-                    [armOffset+o,legWidth+notchWidth+notchMargin],
-                //    [armOffset+armWidth-o,legWidth+notchWidth+notchMargin],
-                    [armOffset+armWidth-o,legWidth+notchWidth+notchMargin+o],
-                    [gantryLen+frontWheelOff-o,legWidth+notchWidth+notchMargin+o]
-                    ]);                    
-    }
-        // Carriage wheels shafts and well
-        for(i=[0:len(wheelsPos)-1])
-            tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1]) {
-                // Screw shaft
-                cyl_eps(wheelAxlesDiam,thk+profW);
-                
-                // Screw head Seat
-                trcyl_eps(0,0,thk+profW-wheelAxleHeadThk,wheelAxleHeadDiam,wheelAxleHeadThk);
-                
-                // wheel space
-                cylinder(d=wheelWellDiam,h=profW);
-                a=45;
-                wellThk=gantryHeight+thk;
-                // slanted wheel clearance
-                if(i==3)
-                rottrcube(wheelWellDiam/8,0,wellThk/16,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,armLength*2+wheelWellDiam*2,wellThk,center=true);
-                else
-                trrotcube((7*wheelWellDiam/16)*(wheelsPos[i][2]?1:-1),0,1,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,wheelWellDiam,wellThk,center=true);
+            gantryBasePlate(o,gantryClearance);
+            gantryArm(o);                    
         }
         
-        // XBar notch
+        // Clearance for wheels
+        wheelWells();
+        
+        // YBar profile longitudinal tunnel
+        trcube_eps(-rearWheelOff,legWidth-notchMargin,0,
+        gantryLen+frontWheelOff+rearWheelOff,
+        notchWidth+2*notchMargin,
+        profW-wheelPodHeight+YBarClearance);
+        
+        // XBar transversal slot
         trcube(barOffset,legWidth+notchWidth,0,profW,armLength+gantryWidth,profW);
         
-        // XBar tnut holes
+        // XBar top plate vertical tnut holes
         for(y=[gantryClearance+3*profW/8,legWidth+notchWidth+profW/2]) {
             trrot(armOffset-profW/2,y,thk+profW,180) tnutHole(0,0,tnutScrewSeatDepth,thk);
+        }
+        
+        // XBar arm horizontal t-nut holes
+        for(offset=[13*armLength/16,5*armLength/16]) {
+            trrot(armOffset+armWidth,legWidth*2+notchWidth+offset,profW/2,0,-90,0)
+            tnutHole(0,0,legWidth-tnutScrewSeatDepth,legWidth);
         }
         
         // Pulley axles shafts
         // And align in X so that the belts are aligned with the X carriage
         for(i=[-1,1]) {
-            //pulleyAxleX=barOffset+profW/2+i*(carriageWidth+pulleyDiam)/2;
             t=profW;
             trrot(pulleyAxleX(i),pulleyAxleY(),thk+profW,0,180,0)
             shaftHoleScrewHexNut(0,0,thk+t,pulleyAxleDiam,pulleyAxleHeadThk+t,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,true,i==1?isLeft:!isLeft);
         }
-                   
-        // XBar Profile tunnel
-        trcube_eps(-rearWheelOff,legWidth-notchMargin,0,gantryLen+frontWheelOff+rearWheelOff,notchWidth+2*notchMargin,profW+notchMargin);
-        
-        // Horizontal t-nut bores
-        for(offset=[13*armLength/16,5*armLength/16]) {
-            trrot(armOffset+armWidth,legWidth*2+notchWidth+offset,profW/2,0,-90,0)
-            tnutHole(0,0,legWidth-tnutScrewSeatDepth,legWidth);
-        }
 	}
     
+    wheelPods();    
+}
+
+module gantryBasePlate(o,gantryClearance) {
+    tr(0,0,profW-gantryHeight) {
+        linear_extrude(height=thk+gantryHeight,convexity=2) {
+            difference() {
+                union() {
+                    offset(r=o,$fn=$_FN_CHAMP) polygon(points=[
+                        [o,o],
+                        [gantryLen-o,o],  // Border
+                        // Front Notch
+                        [gantryLen-o,legWidth-o],
+                        [gantryLen-notchDepth-o,legWidth-notchMargin-o],
+                        [gantryLen-notchDepth-o,legWidth+notchWidth+o],
+                        [gantryLen+frontWheelOff-o,legWidth+notchWidth+o],
+                        [gantryLen+frontWheelOff-o,gantryWidth-o],
+                        [pulleyAxleX(-1),gantryWidth-o],
+     
+                        // Bump for pulley shaft clearance
+                        [pulleyAxleX(-1),gantryClearance-o],
+                        [pulleyAxleX(),gantryClearance-o],
+                        [pulleyAxleX(),gantryWidth-o],
+
+                        // Back Notch
+                        [o-rearWheelOff,gantryWidth-o],
+                        [o-rearWheelOff,legWidth+notchWidth+o],
+                        [o+notchDepth,legWidth+notchWidth+o],
+                        [o+notchDepth,legWidth-o],
+                        [o,legWidth-o]
+                        ]);
+                    
+                    // Support for second X Axis TNut 
+                    //translate([armOffset+armWidth,gantryWidth]) circle(profW);
+                    translate([armOffset,gantryClearance]) circle(profW);
+                
+                    // Bump for pulley axis support
+                    translate([pulleyAxleX(),pulleyAxleY()]) circle(pulleyAxleHeadDiam);
+                }
+                
+                // Remove notches
+                for(x=[notchDepth/2+o/2,gantryLen-notchDepth/2-o/2]) {
+                    translate([x,legWidth+notchWidth/2]) circle(d=notchWidth);
+                }
+            }
+        }
+    }
+}
+
+module gantryArm(o) {
+    linear_extrude(height=thk+profW,convexity=2) {
+        offset(r=o,$fn=$_FN_CHAMP) {
+            polygon(points=[
+                [gantryLen+frontWheelOff-o,gantryWidth-o],
+                [gantryLen+frontWheelOff-o,gantryWidth-o],
+                [armOffset+armWidth+profW-o,gantryWidth-o],
+                [armOffset+armWidth-o,gantryWidth+profW-o],
+                [armOffset+armWidth-o,armLength+gantryWidth-o],
+                [armOffset+o,armLength+gantryWidth-o],
+                [armOffset+o,legWidth+notchWidth+notchMargin+o],
+                [armOffset+o,legWidth+notchWidth+notchMargin],
+                [armOffset+armWidth-o,legWidth+notchWidth+notchMargin+o],
+                [gantryLen+frontWheelOff-o,legWidth+notchWidth+notchMargin+o]
+                ]);
+        }
+    }
+}
+
+module wheelWells() {
+    // Carriage wheels shafts and well
+    for(i=[0:len(wheelsPos)-1]) {
+        tr(wheelXOff+wheelsPos[i][0],wheelYOff+ wheelsPos[i][1]) {
+            // Screw shaft
+            cyl_eps(wheelAxlesDiam,thk+profW);
+            
+            // Screw head Seat
+            trcyl_eps(0,0,thk+profW-wheelAxleHeadThk,wheelAxleHeadDiam,wheelAxleHeadThk);
+                
+            // wheel clearance
+            cylinder(d=wheelWellDiam,h=profW);
+            a=45;
+            wellThk=gantryHeight+thk;
+            
+            // slanted wheel clearance
+            if(i==3) {
+                rottrcube(wheelWellDiam/8,0,wellThk/16,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,armLength*2+wheelWellDiam*2,wellThk,center=true);
+            } else {
+                trrotcube((7*wheelWellDiam/16)*(wheelsPos[i][2]?1:-1),0,1,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,wheelWellDiam,wellThk,center=true);
+            }
+        }
+    }
+}
+
+module wheelPods() {
     // Wheel pods
     for(i=[0:len(wheelsPos)-1]) {        
-        tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1],profW-wheelPodHeight)
+        tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1],profW-wheelPodHeight) {
             difference() {
-                cylinder(h=wheelPodHeight,d1=wheelPodDiam,d2=legWidth-notchMargin*2,fn=$_FN_CYL);
+                //color(wheelsPos[i][3]?"red":"blue")
+                intersection() {
+                    cylinder(h=wheelPodHeight,d1=wheelPodDiam,d2=1.1*legWidth,fn=$_FN_CYL);
+                    trcube(-legWidth/2,-legWidth/2+(wheelsPos[i][3]?notchMargin:0),0,legWidth,legWidth-notchMargin,wheelPodHeight);
+                }
                 cyl_eps(h=wheelPodHeight,d=wheelAxlesDiam);
-            }
+            }    
+        }
     }
 }
 
