@@ -47,7 +47,7 @@ legWidth=20;
 gantryHeight=10;    // thickness of gantry plate
 
 armWidth=20;
-armLength=70; //gantryDepth-gantryWidth;
+armLength=70; 
 
 /* offset for the inner wheels */
 frontWheelOff=15;
@@ -57,12 +57,17 @@ rearWheelOff=10;
 carriageWidth=30;   // Width of the print head carriage
 printHeadOffset=25;
 
+// Offset of X carriage bar
+barOffset=gantryLen/2-profW/2+printHeadOffset;
+armOffset=barOffset+profW;
+
+// Notch values
 notchMargin=1;  // margin on each side
 notchWidth=profW;
 notchDepth=notchWidth;
 
+// Wheels physics
 wheelSpacing=40;
-
 wheelAxlesDiam=5; // 5.3
 wheelAxleHeadThk=3;
 wheelAxleHeadDiam=9;
@@ -88,11 +93,7 @@ wheelsPos=[[0,0,true,false],
            [wheelXDelta,0,false,false],
            [-rearWheelOff,wheelSpacing,true,true],
            [wheelXDelta+frontWheelOff,wheelSpacing,false,true]];
-
-// Offset of X carriage bar
-barOffset=gantryLen/2-profW+printHeadOffset;
-armOffset=barOffset+profW;
-    
+   
 // The axles are aligned in Y so that the belt aligns with the motor pulley
 function pulleyAxleY()=legWidth+(notchWidth-profW)/2+motorShaftInset+motorPulleyDiam/2+pulleyDiam/2+beltThk;
 function pulleyAxleX(i=1)=barOffset+profW/2-i*(carriageWidth+pulleyDiam)/2;
@@ -125,7 +126,7 @@ module gantryTopPlate(isLeft,o=champRPlate) {
         profW-wheelPodHeight+YBarClearance);
         
         // XBar transversal slot
-        trcube(barOffset,legWidth+notchWidth,0,profW,armLength+gantryWidth,profW);
+        trcube(armOffset-profW,legWidth+notchWidth,0,profW,armLength+gantryWidth,profW);
         
         // XBar top plate vertical tnut holes
         for(y=[gantryClearance+3*profW/8,legWidth+notchWidth+profW/2]) {
@@ -188,11 +189,8 @@ module gantryPlateShape(o) {
             // Bump for pulley axis support
             translate([pulleyAxleX(),pulleyAxleY()]) circle(pulleyAxleHeadDiam);
         }
-        echo(notchWidth,notchDepth);
+
         // Remove notches
-        for(x=[notchDepth/2+o/2,gantryLen-notchDepth/2-o/2]) {
-         //   translate([x,legWidth+notchWidth/2]) circle(d=notchWidth);
-        }
         for(x=[notchOffset,gantryLen-notchOffset]) {
             translate([x,legWidth+notchWidth/2+notchMargin/2]) circle(d=notchWidth+notchMargin);
         }
@@ -215,11 +213,11 @@ module gantryArm(o) {
                 [gantryLen+frontWheelOff-o, legWidth+notchWidth+notchMargin+o+cutCorner],
                 [gantryLen+frontWheelOff-o, gantryWidth-o],
                 [armOffset+armWidth+profW-o,gantryWidth-o],
+                [gantryLen+frontWheelOff-o, gantryWidth-o],
                 [armOffset+armWidth-o,      gantryWidth+profW-o],
                 [armOffset+armWidth-o,      armLength+gantryWidth-o],
                 [armOffset+o,               armLength+gantryWidth-o],
                 [armOffset+o,               legWidth+notchWidth+notchMargin+o],
-                [armOffset+o,               legWidth+notchWidth+notchMargin],
                 [armOffset+armWidth-o,      legWidth+notchWidth+notchMargin+o]
                 
                 ]);
