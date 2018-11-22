@@ -41,7 +41,7 @@ include <X5S_Build_v2.scad>
 use <X5S_Utils_v1.scad>
 
 /* arbitrary size */
-gantryLen=110; //113.85;
+gantryLen=95; //113.85;
 legWidth=20;
 
 gantryHeight=10;    // thickness of gantry plate
@@ -50,8 +50,8 @@ armWidth=20;
 armLength=70; 
 
 /* offset for the inner wheels */
-frontWheelOff=15;
-rearWheelOff=10;
+frontWheelOff=20;
+rearWheelOff=20;
 
 /* Print head dimensions */
 carriageWidth=30;   // Width of the print head carriage
@@ -64,7 +64,7 @@ armOffset=barOffset+profW;
 // Notch values
 notchMargin=1;  // margin on each side
 notchWidth=profW;
-notchDepth=notchWidth;
+notchDepth=notchWidth/2;
 
 // Wheels physics
 wheelSpacing=40;
@@ -110,14 +110,18 @@ module gantryTopPlate(isLeft,o=champRPlate) {
     barOffset=gantryLen/2-profW+printHeadOffset;
 
 	// base plate
-	difference() {
-		union() {
-            gantryBasePlate(o);
-            gantryArm(o);                    
+    difference() {
+        union() {
+            difference() {
+                union() {
+                    gantryBasePlate(o);
+                    gantryArm(o);                    
+                }
+                // Clearance for wheels
+                wheelWells();
+            }
+            wheelPods(o);  
         }
-        
-        // Clearance for wheels
-        wheelWells();
         
         // YBar profile longitudinal tunnel
         trcube_eps(-rearWheelOff,legWidth-notchMargin,0,
@@ -146,9 +150,7 @@ module gantryTopPlate(isLeft,o=champRPlate) {
             trrot(pulleyAxleX(i),pulleyAxleY(),thk+profW,0,180,0)
             shaftHoleScrewHexNut(0,0,thk+t,pulleyAxleDiam,pulleyAxleHeadThk+t,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,true,i==1?isLeft:!isLeft);
         }
-	}
-    
-    wheelPods(o);    
+	}  
 }
 
 module gantryPlateShape(o) {
@@ -234,7 +236,7 @@ module wheelWells() {
             
             // Screw head Seat
             trcyl_eps(0,0,thk+profW-wheelAxleHeadThk,wheelAxleHeadDiam,wheelAxleHeadThk);
-                
+                        
             // wheel clearance
             cylinder(d=wheelWellDiam,h=profW);
             a=45;
@@ -242,7 +244,10 @@ module wheelWells() {
             
             // slanted wheel clearance
             if(i==3) {
-                rottrcube(wheelWellDiam/8,0,wellThk/16,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,armLength*2+wheelWellDiam*2,wellThk,center=true);
+                rottrcube(-wheelWellDiam/2,-armLength-armWidth/2,-wellThk*3/4,
+                0,45,wheelsPos[i][2]?0:180,
+                wheelWellDiam,armLength+profW,wellThk,
+                center=false);
             } else {
                 trrotcube((7*wheelWellDiam/16)*(wheelsPos[i][2]?1:-1),0,1,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,wheelWellDiam,wellThk,center=true);
             }
