@@ -59,7 +59,7 @@ printHeadOffset=25;
 
 notchMargin=1;  // margin on each side
 notchWidth=profW;
-notchDepth=0;//notchWidth/2;
+notchDepth=notchWidth;
 
 wheelSpacing=40;
 
@@ -73,6 +73,8 @@ wheelPodHeight=5;
 wheelPodDiam=7.8;
 
 YBarClearance=7; //7.6;
+
+cutCorner=7;
 
 /* Compute some derived constants shorthands */
 gantryWidth=legWidth+notchWidth+legWidth;    //71.5;
@@ -94,24 +96,22 @@ armOffset=barOffset+profW;
 // The axles are aligned in Y so that the belt aligns with the motor pulley
 function pulleyAxleY()=legWidth+(notchWidth-profW)/2+motorShaftInset+motorPulleyDiam/2+pulleyDiam/2+beltThk;
 function pulleyAxleX(i=1)=barOffset+profW/2-i*(carriageWidth+pulleyDiam)/2;
+
+// Compute clearance Width of gantry
+gantryClearance=max(gantryWidth,pulleyAxleY()+pulleyAxleHeadDiam);
+
     
 module gantryTopPlate(isLeft,o=champRPlate) {
     // shorthand for offset
     //o=0;
-    
-    // Compute clearance Width of gantry
-    gantryClearance=max(gantryWidth,pulleyAxleY()+pulleyAxleHeadDiam);
-    
-    // Adjust notch if set to 0, we need to take the rounding into account
-    notchDepth=notchDepth==0?o:notchDepth;
-    
+        
     // Compute offset of bar so that head is aligned with middle of gantry
     barOffset=gantryLen/2-profW+printHeadOffset;
 
 	// base plate
 	difference() {
 		union() {
-            gantryBasePlate(o,gantryClearance);
+            gantryBasePlate(o);
             gantryArm(o);                    
         }
         
@@ -147,51 +147,62 @@ module gantryTopPlate(isLeft,o=champRPlate) {
         }
 	}
     
-    wheelPods();    
+    wheelPods(o);    
+}
+
+module gantryPlateShape(o) {
+    difference() {
+        notchOffset=notchDepth-notchWidth/2;
+        innerOffset=legWidth+notchWidth+notchMargin;
+        union() {
+            offset(r=o,$fn=$_FN_CHAMP) polygon(points=[
+                [o,o],
+                [gantryLen-o,o],  // Border
+                // Front Notch
+                [gantryLen-o,               legWidth-o],
+                [gantryLen-notchOffset-o,   legWidth-o],
+                [gantryLen-notchOffset-o,   innerOffset+o],
+                [gantryLen+frontWheelOff-o-cutCorner, innerOffset+o],
+                [gantryLen+frontWheelOff-o, innerOffset+o+cutCorner],
+                [gantryLen+frontWheelOff-o, gantryWidth-o],
+                [pulleyAxleX(-1),           gantryWidth-o],
+
+                // Bump for pulley shaft clearance
+                [pulleyAxleX(-1),gantryClearance-o],
+                [pulleyAxleX(),gantryClearance-o],
+                [pulleyAxleX(),gantryWidth-o],
+
+                // Back Notch
+                [o-rearWheelOff,            gantryWidth-o],
+                [o-rearWheelOff,            innerOffset+o+cutCorner],
+                [o-rearWheelOff+cutCorner,  innerOffset+o],
+                [notchOffset+o,             innerOffset+o],
+                [notchOffset+o,             legWidth-o],
+                [o,                         legWidth-o]
+                ]);
+            
+            // Support for second X Axis TNut 
+            //translate([armOffset+armWidth,gantryWidth]) circle(profW);
+            translate([armOffset,gantryClearance]) circle(profW);
+        
+            // Bump for pulley axis support
+            translate([pulleyAxleX(),pulleyAxleY()]) circle(pulleyAxleHeadDiam);
+        }
+        echo(notchWidth,notchDepth);
+        // Remove notches
+        for(x=[notchDepth/2+o/2,gantryLen-notchDepth/2-o/2]) {
+         //   translate([x,legWidth+notchWidth/2]) circle(d=notchWidth);
+        }
+        for(x=[notchOffset,gantryLen-notchOffset]) {
+            translate([x,legWidth+notchWidth/2+notchMargin/2]) circle(d=notchWidth+notchMargin);
+        }
+    }
 }
 
 module gantryBasePlate(o,gantryClearance) {
     tr(0,0,profW-gantryHeight) {
         linear_extrude(height=thk+gantryHeight,convexity=2) {
-            difference() {
-                union() {
-                    offset(r=o,$fn=$_FN_CHAMP) polygon(points=[
-                        [o,o],
-                        [gantryLen-o,o],  // Border
-                        // Front Notch
-                        [gantryLen-o,legWidth-o],
-                        [gantryLen-notchDepth-o,legWidth-notchMargin-o],
-                        [gantryLen-notchDepth-o,legWidth+notchWidth+o],
-                        [gantryLen+frontWheelOff-o,legWidth+notchWidth+o],
-                        [gantryLen+frontWheelOff-o,gantryWidth-o],
-                        [pulleyAxleX(-1),gantryWidth-o],
-     
-                        // Bump for pulley shaft clearance
-                        [pulleyAxleX(-1),gantryClearance-o],
-                        [pulleyAxleX(),gantryClearance-o],
-                        [pulleyAxleX(),gantryWidth-o],
-
-                        // Back Notch
-                        [o-rearWheelOff,gantryWidth-o],
-                        [o-rearWheelOff,legWidth+notchWidth+o],
-                        [o+notchDepth,legWidth+notchWidth+o],
-                        [o+notchDepth,legWidth-o],
-                        [o,legWidth-o]
-                        ]);
-                    
-                    // Support for second X Axis TNut 
-                    //translate([armOffset+armWidth,gantryWidth]) circle(profW);
-                    translate([armOffset,gantryClearance]) circle(profW);
-                
-                    // Bump for pulley axis support
-                    translate([pulleyAxleX(),pulleyAxleY()]) circle(pulleyAxleHeadDiam);
-                }
-                
-                // Remove notches
-                for(x=[notchDepth/2+o/2,gantryLen-notchDepth/2-o/2]) {
-                    translate([x,legWidth+notchWidth/2]) circle(d=notchWidth);
-                }
-            }
+            gantryPlateShape(o,gantryClearance);
         }
     }
 }
@@ -200,16 +211,17 @@ module gantryArm(o) {
     linear_extrude(height=thk+profW,convexity=2) {
         offset(r=o,$fn=$_FN_CHAMP) {
             polygon(points=[
-                [gantryLen+frontWheelOff-o,gantryWidth-o],
-                [gantryLen+frontWheelOff-o,gantryWidth-o],
+                [gantryLen+frontWheelOff-o-cutCorner, legWidth+notchWidth+notchMargin+o],
+                [gantryLen+frontWheelOff-o, legWidth+notchWidth+notchMargin+o+cutCorner],
+                [gantryLen+frontWheelOff-o, gantryWidth-o],
                 [armOffset+armWidth+profW-o,gantryWidth-o],
-                [armOffset+armWidth-o,gantryWidth+profW-o],
-                [armOffset+armWidth-o,armLength+gantryWidth-o],
-                [armOffset+o,armLength+gantryWidth-o],
-                [armOffset+o,legWidth+notchWidth+notchMargin+o],
-                [armOffset+o,legWidth+notchWidth+notchMargin],
-                [armOffset+armWidth-o,legWidth+notchWidth+notchMargin+o],
-                [gantryLen+frontWheelOff-o,legWidth+notchWidth+notchMargin+o]
+                [armOffset+armWidth-o,      gantryWidth+profW-o],
+                [armOffset+armWidth-o,      armLength+gantryWidth-o],
+                [armOffset+o,               armLength+gantryWidth-o],
+                [armOffset+o,               legWidth+notchWidth+notchMargin+o],
+                [armOffset+o,               legWidth+notchWidth+notchMargin],
+                [armOffset+armWidth-o,      legWidth+notchWidth+notchMargin+o]
+                
                 ]);
         }
     }
@@ -240,23 +252,26 @@ module wheelWells() {
     }
 }
 
-module wheelPods() {
+module wheelPods(o) {
     // Wheel pods
-    for(i=[0:len(wheelsPos)-1]) {        
-        tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1],profW-wheelPodHeight) {
-            difference() {
-                //color(wheelsPos[i][3]?"red":"blue")
-                intersection() {
+    intersection() {
+        for(i=[0:len(wheelsPos)-1]) {        
+            tr(wheelXOff+wheelsPos[i][0],wheelYOff+wheelsPos[i][1],profW-wheelPodHeight) {
+                difference() {
                     cylinder(h=wheelPodHeight,d1=wheelPodDiam,d2=1.1*legWidth,fn=$_FN_CYL);
-                    trcube(-legWidth/2,-legWidth/2+(wheelsPos[i][3]?notchMargin:0),0,legWidth,legWidth-notchMargin,wheelPodHeight);
-                }
-                cyl_eps(h=wheelPodHeight,d=wheelAxlesDiam);
-            }    
+             
+                    cyl_eps(h=wheelPodHeight,d=wheelAxlesDiam);
+                }    
+            }
+        }
+        linear_extrude(height=thk+profW,convexity=2) {
+            gantryPlateShape(o);
         }
     }
 }
 
-difference() {
-    //gantryTopPlate(true,0);
+//projection()
+//difference() {
+//    gantryTopPlate(true,0);
     gantryTopPlate(true,5);
-}
+//}
