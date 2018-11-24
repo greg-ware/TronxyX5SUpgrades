@@ -33,7 +33,7 @@ use <phgUtils_v1.scad>
     - pulley raiser
 */
 SIDE="LEFT";
-//SIDE="RIGHT";
+SIDE="RIGHT";
 
 // Parts build constants
 include <X5S_Build_v2.scad>
@@ -43,11 +43,14 @@ use <X5S_Utils_v1.scad>
 /* arbitrary size */
 gantryLen=95; //113.85;
 legWidth=20;
+legHeight=profW;
 
-gantryHeight=10;    // thickness of gantry plate
+gantryThk=thk;    // thickness of gantry plate
 
 armWidth=20;
 armLength=70; 
+
+rounding=5;
 
 /* offset for the inner wheels */
 frontWheelOff=20;
@@ -107,7 +110,7 @@ module gantryTopPlate(isLeft,o=champRPlate) {
     //o=0;
         
     // Compute offset of bar so that head is aligned with middle of gantry
-    barOffset=gantryLen/2-profW+printHeadOffset;
+    //barOffset=gantryLen/2-profW+printHeadOffset;
 
 	// base plate
     difference() {
@@ -119,7 +122,15 @@ module gantryTopPlate(isLeft,o=champRPlate) {
                 }
                 // Clearance for wheels
                 wheelWells();
+                
+                // Slant edges
+                slant(0,legWidth-notchMargin,profW-(legHeight-gantryThk)/2,gantryLen,legWidth,legWidth,180+45);
+                slant(0,profW+legWidth+notchMargin,profW-(legHeight-gantryThk)/2,gantryLen,legWidth,legWidth*2,180+45);
+                //#slant(armOffset,profW+legWidth+notchMargin,-profW/2,armWidth,legWidth+armLength,armWidth,0,45);
+                // Remove arm top, printing will require supports
+                trcube(armOffset-$_EPSILON,legWidth+profW+legWidth+profW+o,profW,armWidth+2*$_EPSILON,armLength,gantryThk+$_EPSILON);
             }
+            // Add wheel pods
             wheelPods(o);  
         }
         
@@ -134,7 +145,7 @@ module gantryTopPlate(isLeft,o=champRPlate) {
         
         // XBar top plate vertical tnut holes
         for(y=[gantryClearance+3*profW/8,legWidth+notchWidth+profW/2]) {
-            trrot(armOffset-profW/2,y,thk+profW,180) tnutHole(0,0,tnutScrewSeatDepth,thk);
+            trrot(armOffset-profW/2,y,gantryThk+profW,180) tnutHole(0,0,tnutScrewSeatDepth,gantryThk);
         }
         
         // XBar arm horizontal t-nut holes
@@ -147,8 +158,8 @@ module gantryTopPlate(isLeft,o=champRPlate) {
         // And align in X so that the belts are aligned with the X carriage
         for(i=[-1,1]) {
             t=profW;
-            trrot(pulleyAxleX(i),pulleyAxleY(),thk+profW,0,180,0)
-            shaftHoleScrewHexNut(0,0,thk+t,pulleyAxleDiam,pulleyAxleHeadThk+t,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,true,i==1?isLeft:!isLeft);
+            trrot(pulleyAxleX(i),pulleyAxleY(),gantryThk+profW,0,180,0)
+            shaftHoleScrewHexNut(0,0,gantryThk+t,pulleyAxleDiam,pulleyAxleHeadThk+t,pulleyAxleHeadDiam,pulleyAxleHexThk,pulleyAxleHexDiam,true,i==1?isLeft:!isLeft);
         }
 	}  
 }
@@ -200,15 +211,15 @@ module gantryPlateShape(o) {
 }
 
 module gantryBasePlate(o,gantryClearance) {
-    tr(0,0,profW-gantryHeight) {
-        linear_extrude(height=thk+gantryHeight,convexity=2) {
+    tr(0,0,legHeight-gantryThk) {
+        linear_extrude(height=legHeight,convexity=2) {
             gantryPlateShape(o,gantryClearance);
         }
     }
 }
 
 module gantryArm(o) {
-    linear_extrude(height=thk+profW,convexity=2) {
+    linear_extrude(height=gantryThk+profW,convexity=2) {
         offset(r=o,$fn=$_FN_CHAMP) {
             polygon(points=[
                 [gantryLen+frontWheelOff-o-cutCorner, legWidth+notchWidth+notchMargin+o],
@@ -227,20 +238,25 @@ module gantryArm(o) {
     }
 }
 
+/* Create a slanted cube that hinges on the xyz*/
+module slant(x,y,z,dx,dy,dz,ax,ay=0,az=0) {
+     tr(x,y,z) rotate([ax,ay,az]) cube([dx,dy,dz]);
+}
+
 module wheelWells() {
     // Carriage wheels shafts and well
     for(i=[0:len(wheelsPos)-1]) {
         tr(wheelXOff+wheelsPos[i][0],wheelYOff+ wheelsPos[i][1]) {
             // Screw shaft
-            cyl_eps(wheelAxlesDiam,thk+profW);
+            cyl_eps(wheelAxlesDiam,gantryThk+profW);
             
             // Screw head Seat
-            trcyl_eps(0,0,thk+profW-wheelAxleHeadThk,wheelAxleHeadDiam,wheelAxleHeadThk);
+            trcyl_eps(0,0,gantryThk+profW-wheelAxleHeadThk,wheelAxleHeadDiam,wheelAxleHeadThk);
                         
             // wheel clearance
             cylinder(d=wheelWellDiam,h=profW);
             a=45;
-            wellThk=gantryHeight+thk;
+            wellThk=legHeight;
             
             // slanted wheel clearance
             if(i==3) {
@@ -249,7 +265,7 @@ module wheelWells() {
                 wheelWellDiam,armLength+profW,wellThk,
                 center=false);
             } else {
-                trrotcube((7*wheelWellDiam/16)*(wheelsPos[i][2]?1:-1),0,1,0,a,wheelsPos[i][2]?0:180,wheelWellDiam,wheelWellDiam,wellThk,center=true);
+                slant(wheelsPos[i][2]?wheelWellDiam*3/8:-wheelWellDiam*3/8,-legWidth/2,profW-wheelPodHeight/2,legWidth,legWidth,legHeight,0,180-45);
             }
         }
     }
@@ -267,14 +283,22 @@ module wheelPods(o) {
                 }    
             }
         }
-        linear_extrude(height=thk+profW,convexity=2) {
+        linear_extrude(height=gantryThk+profW,convexity=2) {
             gantryPlateShape(o);
         }
     }
 }
 
+if(SIDE=="LEFT") {
+    trrot(gantryLen,0,gantryThk+profW,0,180,0)
+    gantryTopPlate(true,rounding);
+} else if(SIDE=="RIGHT") {
+    trrot(0,0,gantryThk+profW,0,180,0)
+    mirror([1,0,0]) gantryTopPlate(false,rounding);
+}
+
 //projection()
 //difference() {
 //    gantryTopPlate(true,0);
-    gantryTopPlate(true,5);
+    //gantryTopPlate(true,5);
 //}
